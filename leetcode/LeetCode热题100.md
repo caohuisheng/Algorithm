@@ -310,3 +310,228 @@ class Solution {
 }
 ```
 
+## 滑动窗口
+
+[3. 无重复字符的最长子串 - 力扣（LeetCode）](https://leetcode.cn/problems/longest-substring-without-repeating-characters/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public int lengthOfLongestSubstring(String s) {
+        // 定义窗口
+        Map<Character, Integer> window = new HashMap<>();
+        
+        int left = 0, right = 0;
+        int res = 0;
+        while(right < s.length()){
+            char c = s.charAt(right++);
+            // 进行窗口内数据的一系列更新
+            window.put(c, window.getOrDefault(c, 0) + 1);
+            // 判断左侧窗口是否要收缩
+            while(window.get(c) > 1){
+                char d = s.charAt(left++);
+                // 进行窗口内数据的一系列更新
+                window.put(d, window.get(d) - 1);
+            }
+            // 更新结果
+            res = Math.max(res, right-left);
+        }
+        return res;
+    }
+}
+```
+
+[438. 找到字符串中所有字母异位词 - 力扣（LeetCode）](https://leetcode.cn/problems/find-all-anagrams-in-a-string/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：直接使用滑动窗口模板即可，使用need保存模式串p中所有字符，每次将一个字符添加到窗口中，当窗口中字符数量大于模式串p的长度时需要收缩窗口，使用count记录此时满足数量要求的字符数。收缩后窗口的长度即与模式串p的长度相等，如果满足要求的字符数等于need中的字符数，则找到了一个合法结果。
+
+```java
+class Solution {
+    public List<Integer> findAnagrams(String s, String p) {
+        Map<Character, Integer> window = new HashMap<>();
+        Map<Character, Integer> need = new HashMap<>();
+        for(char c:p.toCharArray()) need.put(c, need.getOrDefault(c, 0) + 1);
+
+        // 记录窗口中满足数量要求的字符数
+        int count = 0;
+        int left = 0, right = 0;
+        // 记录结果
+        List<Integer> res = new ArrayList<>();
+        while(right < s.length()){
+            char c = s.charAt(right++);
+            // 进行窗口内的一些列更新
+            if(need.containsKey(c)){
+                window.put(c, window.getOrDefault(c, 0) + 1);
+                if(window.get(c).equals(need.get(c))) count++;
+            }
+            // 判断左侧窗口是否要收缩
+            while(right - left > p.length()){
+                char d = s.charAt(left++);
+                // 进行窗口内的一些列更新
+                if(need.containsKey(d)){
+                    if(window.get(d).equals(need.get(d))) count--;
+                    window.put(d, window.get(d) - 1);
+                }
+            }
+            // 满足数量要求的字符与模式串中相等，记录结果
+            if(count == need.size()) res.add(left);
+        }
+        return res;
+    }
+}
+```
+
+## 子串
+
+[560. 和为 K 的子数组 - 力扣（LeetCode）](https://leetcode.cn/problems/subarray-sum-equals-k/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+题目即求元素之和为k的子数组，设子数组所在的区间为区间为$[i, j]$，则可以枚举每一个区间，统计满足条件的即可。可以现枚举区间的结束位置$j$, 再枚举开始位置$i$，开始位置可以反向遍历，边遍历边计算元素和。
+
+```java
+class Solution {
+    public int subarraySum(int[] nums, int k) {
+        int n = nums.length;
+        int res = 0;
+        //枚举结束位置
+        for(int i=0;i<n;i++){
+            int sum = 0;
+            //枚举开始位置
+            for(int j=i;j>=0;j--){
+                sum += nums[j];
+                if(sum == k) res++;
+            }
+        }
+        return res;
+    }
+}
+```
+
+思路二：
+
+- 可以先计算数组的前缀和，区间$[i,j]$的子数组元素之和即为$k=pre[j]-pre[i-1]$，则对于结束位置$j$，需要找到满足$pre[i-1]=pre[j]-k$的所有$i$。
+- 可以使用哈希表map保存当前枚举结束位置$j$左侧各前缀和的出现次数，则当结束位置为$j$时满足条件的子数组个数为$map[pre[j]-k]$，累加到结果即可。
+- 由于需要知道当前枚举结束位置前面特定前缀和的出现次数，需要边遍历边计算前缀和，即使用变量pre保存当前前缀和$nums[0..j]$，同时将前缀和保存在map映射中。
+
+```java
+class Solution {
+    // pre[i]-pre[j-1] = k
+    public int subarraySum(int[] nums, int k) {
+        int n = nums.length;
+        // map[x]=n表示前缀和数组中当前值为x的元素数量为n
+        Map<Integer, Integer> map = new HashMap<>();
+        int res = 0;
+        // 记录当前的前缀和
+        int pre = 0;
+        // 初始化（前缀和为0的元素个数为1）
+        map.put(0, 1);
+        for(int i=0;i<n;i++){
+            pre += nums[i];
+            if(map.containsKey(pre - k)){
+                res += map.get(pre - k);
+            }
+            map.put(pre, map.getOrDefault(pre, 0) + 1);
+        }
+        return res;
+    }
+}
+```
+
+[239. 滑动窗口最大值 - 力扣（LeetCode）](https://leetcode.cn/problems/sliding-window-maximum/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+题目要求固定长度的窗口中的最大值，可以使用单调队列实现。这里使用LinkedList实现单调递减队列：
+
+- 在添加元素时，将队尾比自身小的元素都弹出
+- 在弹出一个元素时，若队首元素等于该元素则弹出，否则说明该元素在添加元素时已经被弹出，不做处理
+- 在求窗口中的最大值时直接取队首元素即可
+
+```java
+class Solution {
+    // 单调队列
+    static class MonotonicQueue{
+        LinkedList<Integer> maxq;
+        public MonotonicQueue(){
+            this.maxq=new LinkedList<>();
+        }
+
+        void push(int x){
+            // 将前面小于x的元素弹出
+            while(!maxq.isEmpty()&&maxq.getLast()<x) maxq.pollLast();
+            maxq.addLast(x);
+        }
+
+        void pop(int x){
+            // 当队头元素为x时，删除
+            if(maxq.getFirst()==x) maxq.pollFirst();
+        }
+
+        int max(){
+            // 队头元素为最大值
+            return maxq.getFirst();
+        }
+    }
+    public int[] maxSlidingWindow(int[] nums, int k) {
+        MonotonicQueue window=new MonotonicQueue();
+        int n=nums.length;
+        int[] res=new int[n-k+1];
+        for(int i=0;i<n;i++){
+            if(i<k-1){
+                // 先将前k-1个元素填入窗口
+                window.push(nums[i]);
+            }else{
+                // 窗口开始向前滑动
+                window.push(nums[i]);
+                // 获取窗口最大元素
+                res[i-k+1]=window.max();
+                // 将离开窗口的元素删除
+                window.pop(nums[i-k+1]);
+            }
+        }
+        return res;
+    }
+}
+```
+
+[76. 最小覆盖子串 - 力扣（LeetCode）](https://leetcode.cn/problems/minimum-window-substring/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public String minWindow(String s, String t) {
+        Map<Character, Integer> window = new HashMap<>();
+        Map<Character, Integer> need = new HashMap<>();
+        for(char c:t.toCharArray()) need.put(c, need.getOrDefault(c, 0)+1);
+
+        int valid = 0;
+        int left = 0,right = 0;
+        // 记录最小覆盖字串的起始位置及长度
+        int start = 0, len = Integer.MAX_VALUE;
+        while(right < s.length()){
+            char c = s.charAt(right++);
+            // 进行窗口内数据的一系列更新
+            if(need.containsKey(c)) {
+                window.put(c, window.getOrDefault(c, 0)+1);
+                if(window.get(c).equals(need.get(c))) valid++;
+            }
+
+            // 判断左侧窗口是否要收缩
+            while(valid == need.size()){
+                if(right-left < len){
+                    start = left;
+                    len = right - left;
+                }
+                char d = s.charAt(left++);
+                // 进行窗口内数据的一系列更新
+                if(need.containsKey(d)) {
+                    if(window.get(d).equals(need.get(d))) valid--;
+                    window.put(d, window.get(d)-1);
+                }
+            }
+        }
+        // 返回最小覆盖子串
+        return len == Integer.MAX_VALUE?"":s.substring(start, start+len);
+    }
+}
+```
+
