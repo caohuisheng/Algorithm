@@ -535,3 +535,443 @@ class Solution {
 }
 ```
 
+## 普通数组
+
+[53. 最大子数组和 - 力扣（LeetCode）](https://leetcode.cn/problems/maximum-subarray/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+使用分治算法，将数组分为两部分，最大的子数组和可能出现在左数组、右数组或左右两数组各取一部分，前2种情况可以直接递归求，第三种枚举子数组的开始位置和结束位置求，最终取三者的最大值即可，时间复杂度为O(n^3)。
+
+```java
+class Solution {
+    int[] pre;
+    public int maxSubArray(int[] nums) {
+        int n = nums.length;
+        pre = new int[n+1];
+        for(int i=0;i<n;i++) pre[i+1] = pre[i] + nums[i];
+        return maxSubArray(nums, 0, n-1);
+    }
+    int maxSubArray(int[] nums, int lo, int hi){
+        if(lo == hi) return nums[lo];
+        int mid = (lo + hi) >> 1;
+        int maxLeft = maxSubArray(nums, lo, mid);
+        int maxRight = maxSubArray(nums, mid+1, hi);
+        int res = Math.max(maxLeft, maxRight);
+        for(int i=0;i<=mid;i++){
+            for(int j=mid+1;j<=hi;j++){
+                res = Math.max(res, pre[j+1] - pre[i]);
+            }
+        }
+        return res;
+    }
+}
+```
+
+思路二：
+
+使用动态规划，定义dp[i]为以nums[i]结尾的子数组的最大和，则对于nums[i]有两种选择：
+
+- 拼接在前面的以nums[i-1]结尾的子数组，则dp[i] = dp[i-1] + nums[i]
+- 独自成为一个子数组，则dp[i] = nums[i]
+
+最终枚举子数组的结束位置，取最大值即可。
+
+```java
+class Solution {
+    public int maxSubArray(int[] nums) {
+        int n = nums.length;
+        // dp[i]表示以nums[i]结尾的子数组的最大和
+        int[] dp = new int[n];
+        dp[0] = nums[0];
+        for(int i=1;i<n;i++){
+            dp[i] = Math.max(nums[i], dp[i-1] + nums[i]);
+        }
+        int res = Integer.MIN_VALUE;
+        // 枚举每一个结尾
+        for(int i=0;i<n;i++){
+            res = Math.max(res, dp[i]);
+        }
+        return res;
+    }
+}
+```
+
+[56. 合并区间 - 力扣（LeetCode）](https://leetcode.cn/problems/merge-intervals/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：先将区间按照开始位置升序排序，对于每个区间[left, right]，设已合并的最后一个区间为[start, end]。若left <= end，则可以与该区间合并，更新最后一个合并区间的结束位置为Math.max(end, right)，否则需要作为一个新的合并区间。
+
+```java
+class Solution {
+    public int[][] merge(int[][] intervals) {
+        // 将区间按开始位置升序排序
+        Arrays.sort(intervals, (o1, o2) -> o1[0]-o2[0]);
+        List<int[]> res = new ArrayList<>();
+        // 加入第一个区间
+        res.add(intervals[0]);
+        for(int i = 1;i<intervals.length;i++){
+            int[] cur = intervals[i];
+            int[] last = res.get(res.size()-1);
+            if(cur[0] <= last[1]){
+                // 当前区间可以和最后一个区间合并，更新最后一个区间的结束位置
+                last[1] = Math.max(last[1], cur[1]);
+            }else{
+                // 不能合并，将当前区间添加到res中
+                res.add(cur);
+            }
+        }
+        return res.toArray(new int[0][0]);
+    }
+}
+```
+
+[189. 轮转数组 - 力扣（LeetCode）](https://leetcode.cn/problems/rotate-array/description/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：使用额外的数组
+
+使用一个额外的数组，将每个元素移到空数组对应位置，再将空数组复制回原数组即可。
+
+```java
+class Solution {
+    public void rotate(int[] nums, int k) {
+        int n=nums.length;
+        k%=n;
+        int[] temp=new int[n];
+        for(int i=0;i<n;i++) temp[(i+k)%n]=nums[i];
+        for(int i=0;i<n;i++) nums[i]=temp[i];
+    }
+}
+```
+
+思路二：数组翻转
+
+先将整个数组翻转，再分别将区间 [0, k-1] 和 [k, n-1] 的元素翻转，得到的结果即为轮转 k 步后的数组。
+
+```java
+class Solution {
+    public void rotate(int[] nums, int k) {
+        int n=nums.length;
+        k %= n;
+        reverse(nums, 0, n-1);
+        reverse(nums, 0, k-1);
+        reverse(nums, k, n-1);
+    }
+    void reverse(int[] nums, int l, int r){
+        while(l<r){
+            int temp = nums[l];
+            nums[l] = nums[r];
+            nums[r] = temp;
+        }
+    }
+}
+```
+
+思路三：环状替换
+
+对于开始位置 start 的元素，需要被移动到 (start+k)%n 位置，使用 temp 保存被置换的元素，下一次将 temp 的值设置给下一个位置，依此类推，直到回到开始位置。但是此时还是有很多元素是没有遍历到的，因此需要从开始位置的下一个位置 start+1 开始继续替换，直到所有元素都被替换。
+
+设每轮经过的圈数为x，每一轮遍历到的元素数量为 y，则有 xn = yk，显然 yk 是n和k的公倍数，又因为y尽可能小，故 yk 是n和k的最小公倍数，即  yk = nk/gcd(n, k)，n/y=gcd(n, k)，则遍历的轮数为gcd(n, k)。
+
+```java
+class Solution {
+    public void rotate(int[] nums, int k) {
+        int n=nums.length;
+        k %= n;
+        int count = gcd(n, k);
+        for(int start=0;start<count;start++){
+            int i = start;
+            int prev = nums[start];
+            do{
+                int j = (i+k)%n;
+                int temp = nums[j];
+                nums[j] = prev;
+                prev = temp;
+                i = j;
+            }while(i != start);
+        }
+    }
+
+    int gcd(int x, int y){
+        return y == 0?x:gcd(y, x%y);
+    }
+}
+```
+
+[238. 除自身以外数组的乘积 - 力扣（LeetCode）](https://leetcode.cn/problems/product-of-array-except-self/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+定义数组L, R分别表示 nums[i] 左侧和右侧的元素乘积，最终计算遍历数组计算每个元素除自身之外的元素乘积，时间复杂度为O(n^2)，空间复杂度为O(n)。
+
+```java
+class Solution {
+    public int[] productExceptSelf(int[] nums) {
+        int n = nums.length;
+        // L[i]:nums[i]左侧元素的乘积
+        // R[i]:nums[i]右侧元素的乘积
+        int[] L = new int[n], R = new int[n];
+        L[0] = 1;
+        for(int i=1;i<n;i++){
+            L[i] = L[i-1] * nums[i-1];
+        }
+        R[n-1] = 1;
+        for(int i=n-2;i>=0;i--){
+            R[i] = R[i+1] * nums[i+1];
+        }
+
+        int[] res = new int[n];
+        for(int i = 0;i<n;i++){
+            res[i] = L[i] * R[i];
+        }
+        return res;
+    }
+}
+```
+
+思路二：
+
+直接先使用 res 数组计算L数组，然后计算 R 数组，只是使用 R 变量保存，边遍历边计算结果，时间复杂度为O(n^2)，空间复杂度为O(1)。
+
+```java
+class Solution {
+    public int[] productExceptSelf(int[] nums) {
+        int n = nums.length;
+        int[] res = new int[n];
+        res[0] = 1;
+        for(int i=1;i<n;i++){
+            res[i] = res[i-1] * nums[i-1];
+        }
+        int R = 1;
+        for(int i = n-2;i>=0;i--){
+            R *= nums[i+1];
+            res[i] *= R;
+        }
+        return res;
+    }
+}
+```
+
+[41. 缺失的第一个正数 - 力扣（LeetCode）](https://leetcode.cn/problems/first-missing-positive/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+显然未出现的第一个正数的范围为 [1, n+1]，因此可以将范围 [1, n] 的元素 x 进行标记，最终找出区间 [1, n] 中未被标记的最小元素即为结果，如果都被标记则结果为 n+1。可以借助原始数组，先将不在范围 [1, n]的元素都置为 n+1，对于范围 [1, n] 的元素x，将 arr[x-1] 置为 -arr[x-1]，最终找出数组中非负数的最小位置即为结果。
+
+```java
+class Solution {
+    public int firstMissingPositive(int[] nums) {
+        int n = nums.length;
+        // 将[,0]范围的元素都设为n+1
+        for(int i=0;i<n;i++){
+            if(nums[i]<=0) nums[i] = n+1;
+        }
+        // 将[1,n]范围的元素x对应的位置x-1打上标记
+        for(int i=0;i<n;i++){
+            int num = Math.abs(nums[i]);
+            if(num <= n){
+                nums[num-1] = -Math.abs(nums[nums-1]);
+            }
+        }
+        // 没有的打上标记的第一个元素即为结果
+        for(int i=0;i<n;i++){
+            if(nums[i] > 0) return i+1;
+        }
+        return n+1;
+    }
+}
+```
+
+## 矩阵
+
+[73. 矩阵置零 - 力扣（LeetCode）](https://leetcode.cn/problems/set-matrix-zeroes/description/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+先将值为0的元素坐标都保存到列表中，遍历列表中的坐标，将每个位置的横纵行元素都置为0，时间复杂度O(nm^2)。
+
+```java
+class Solution {
+    public void setZeroes(int[][] matrix) {
+        int m = matrix.length, n = matrix[0].length;
+        // 值为0的元素坐标
+        List<int[]> list = new ArrayList<>();
+        for(int i=0;i<m;i++){
+            for(int j=0;j<n;j++){
+                if(matrix[i][j] == 0) list.add(new int[]{i,j});
+            }
+        }
+        // 将每个坐标对应的行列置为0
+        for(int[] tp:list){
+            for(int i = 0;i<m;i++) matrix[i][tp[1]] = 0;
+            for(int j = 0;j<n;j++) matrix[tp[0]][j] = 0;
+        }
+    }
+}
+```
+
+思路2：
+
+使用首行和首列保存对应列和对应行是否需要置0，并使用 flag_col0, flag_row0 记录首行和首列需要置0，先将中间元素对应位置置0，再将首行和首列置0。
+
+```java
+class Solution {
+    public void setZeroes(int[][] matrix) {
+        int m = matrix.length, n = matrix[0].length;
+        // 标记第一列和第一行是否需要置0
+        boolean flag_col0 = false, flag_row0 = false;
+        for(int i=0;i<m;i++){
+            if(matrix[i][0] == 0){
+                flag_col0 = true;
+                break;
+            } 
+        }
+        for(int j=0;j<n;j++){
+            if(matrix[0][j] == 0){
+                flag_row0 = true;
+                break;
+            }
+        }
+
+        // 标记需要置为0的行和列
+        for(int i=1;i<m;i++){
+            for(int j=1;j<n;j++){
+                if(matrix[i][j] == 0) {
+                    matrix[0][j] = matrix[i][0] = 0;
+                }
+            }
+        }
+
+        // 遍历中间的元素并将对应元素置0
+        for(int i=1;i<m;i++){
+            for(int j=1;j<n;j++){
+                if(matrix[0][j] == 0 || matrix[i][0] == 0){
+                    matrix[i][j] = 0;
+                }
+            }
+        }
+
+        // 置0首行和首列的
+        if(flag_col0){
+            for(int i=0;i<m;i++) matrix[i][0] = 0;
+        }
+        if(flag_row0){
+            for(int j=0;j<n;j++) matrix[0][j] = 0;
+        }
+    }
+}
+```
+
+[54. 螺旋矩阵 - 力扣（LeetCode）](https://leetcode.cn/problems/spiral-matrix/description/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+记录当前未经过元素的上下左右边界，从矩阵左上角开始，依次向右下左上遍历，每遍历完一个方向，更新对应的边界值，当无法继续遍历时结束。
+
+```java
+class Solution {
+    public List<Integer> spiralOrder(int[][] matrix) {
+        int m = matrix.length, n = matrix[0].length;
+        // 定义边界
+        int upper = 0, lower = m-1, left = 0, right = n-1;
+
+        List<Integer> res = new ArrayList<>();
+        while(true){
+            for(int j=left;j<=right;j++) res.add(matrix[upper][j]); //向右移动直到最右
+            if(++upper>lower) break;
+            for(int i=upper;i<=lower;i++) res.add(matrix[i][right]); //向下
+            if(--right<left) break;
+            for(int j=right;j>=left;j--) res.add(matrix[lower][j]); //向左
+            if(--lower<upper) break;
+            for(int i=lower;i>=upper;i--) res.add(matrix[i][left]); //向上
+            if(++left>right) break;
+        }
+
+        return res;
+    }
+}
+```
+
+[48. 旋转图像 - 力扣（LeetCode）](https://leetcode.cn/problems/rotate-image/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+顺时针旋转矩阵90度后，矩阵的行都变成了列。将矩阵按照对角线翻转后，可以发现结果矩阵和旋转后的矩阵是沿竖线对称的，因此将翻转后的矩阵每一行转置即可得到旋转矩阵。
+
+```java
+class Solution {
+    public void rotate(int[][] matrix) {
+        int n=matrix.length;
+        // 沿对角线翻转矩阵
+        for(int i=0;i<n;i++){
+            for(int j=i;j<n;j++){
+                int temp = matrix[i][j];
+                matrix[i][j] = matrix[j][i];
+                matrix[j][i] = temp;
+            }
+        }
+
+        // 翻转矩阵的每一行
+        for(int i=0;i<n;i++){
+            for(int j=0;j<n/2;j++){
+                int temp = matrix[i][j];
+                matrix[i][j] = matrix[i][n-1-j];
+                matrix[i][n-1-j] = temp;
+            }
+        }
+    }
+}
+```
+
+[240. 搜索二维矩阵 II - 力扣（LeetCode）](https://leetcode.cn/problems/search-a-2d-matrix-ii/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：二分查找
+
+由于矩阵的每一行都是有序的，因此可以对每一行进行二分查找，找到了结果即可返回。
+
+```java
+class Solution {
+    public boolean searchMatrix(int[][] matrix, int target) {
+        int m = matrix.length, n = matrix[0].length;
+        //二分搜索每一行
+        for(int[] row:matrix){
+            if(row[0]>target) return -1;
+            int idx = bs(row, target);
+            if(idx != -1) return true;
+        }
+        return false;
+    }
+
+    int bs(int[] arr, int target){
+        int left = 0, right = arr.length-1;
+        while(left <= right){
+            int mid = (left + right) >> 1;
+            if(arr[mid] == target) return mid;
+            else if(arr[mid] > target) right = mid-1;
+            else left = mid+1;
+        }
+        return -1;
+    }
+}
+```
+
+思路二：搜索
+
+矩阵的每一行和每一列都是升序的，可以发现，在矩阵的右上角时，向左移动元素值会减小，向下移动时元素值会增大。因此可以从右上角开始搜索，若元素较大，向左移动，否则向下移动，直到找到目标值结束。
+
+```java
+class Solution {
+    public boolean searchMatrix(int[][] matrix, int target) {
+        int m = matrix.length, n = matrix[0].length;
+        // 从右上角开始搜索
+        int x = 0, y = n-1;
+        while(x<m && y>=0){
+            if(matrix[x][y] == target) return true;
+            else if(matrix[x][y] > target) y--;
+            else x++;
+        }
+        return false;
+    }
+}
+```
+
+
