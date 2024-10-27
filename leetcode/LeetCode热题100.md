@@ -974,4 +974,529 @@ class Solution {
 }
 ```
 
+## 链表
+
+[160. 相交链表 - 力扣（LeetCode）](https://leetcode.cn/problems/intersection-of-two-linked-lists/description/?envType=study-plan-v2&envId=top-100-liked)
+
+思路:
+
+为了找到链表的相交位置，可以分别将另一条链表拼接在本链表的后面，这样两条链表的长度就相等了。同时遍历两条链表，这样遇到相同的节点即为相交的位置。
+
+```java
+public class Solution {
+    public ListNode getIntersectionNode(ListNode headA, ListNode headB) {
+        ListNode pa = headA, pb = headB;
+
+        while(pa != pb){
+            // pa走一步，如果走到A链表末尾，转到B链表
+            if(pa == null) pa = headB;
+            else pa = pa.next;
+            // pb走一步，如果走到B链表末尾，转到A链表
+            if(pb == null) pb = headA;
+            else pb = pb.next;
+        }
+
+        return null;
+    }
+}
+```
+
+[206. 反转链表 - 力扣（LeetCode）](https://leetcode.cn/problems/reverse-linked-list/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+利用递归函数定义，递归调用反转函数，将以 head.next 节点为头结点的链表反转，返回子链表的头节点 last，再将头节点接到子链表末尾即可。
+
+```java
+class Solution {
+    public ListNode reverseList(ListNode head) {
+        if(head == null || head.next == null) return head;
+        // 反转以头节点的下一个节点为首节点的子链表
+        ListNode last = reverseList(head.next);
+        // 将头节点接在子反转链表的结尾
+        head.next.next = head;
+        // 将头节点的next指针置空
+        head.next = null; 
+        return last;
+    }
+}
+```
+
+[234. 回文链表 - 力扣（LeetCode）](https://leetcode.cn/problems/palindrome-linked-list/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+先使用快慢指针方法找到链表的中间位置，并将后半部分的链表反转，遍历前半部分和后半部分的链表，判断节点是否都相等即可。
+
+```java
+class Solution {
+    public boolean isPalindrome(ListNode head) {
+        ListNode fast=head,slow=head;
+        // 使得slow指针到达中间位置
+        while(fast!=null&&fast.next!=null){
+            slow=slow.next;
+            fast=fast.next.next;
+        }
+        // 如果fast不为null，说明链表长度为奇数，slow指针前进一步
+        if(fast!=null) slow=slow.next;
+        // 将链表后半部分反转
+        ListNode q=reverse(slow);
+        ListNode p=head;
+        while(q!=null&&q.val==p.val){
+            p=p.next;
+            q=q.next;
+        }
+        if(q==null) return true;
+        else return false;
+    }
+
+    // 将以head为头节点的链表反转
+    ListNode reverse(ListNode head){
+        ListNode pre=null,cur=head,nxt;
+        while(cur!=null){
+            nxt=cur.next;
+            cur.next=pre;
+            pre=cur;
+            cur=nxt;
+        }
+        return pre;
+    }
+}
+```
+
+[141. 环形链表 - 力扣（LeetCode）](https://leetcode.cn/problems/linked-list-cycle/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+使用快慢指针方法，若链表中存在环，则两指针一定会相交。
+
+```java
+public class Solution {
+    public boolean hasCycle(ListNode head) {
+        ListNode slow = head, fast = head;
+        while(fast != null && fast.next != null){
+            slow = slow.next;
+            fast = fast.next.next;
+            // 快慢指针相遇，说明出现环
+            if(slow == fast) return true;
+        }
+        return false;
+    }
+}
+```
+
+[142. 环形链表 II - 力扣（LeetCode）](https://leetcode.cn/problems/linked-list-cycle-ii/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+public class Solution {
+    public ListNode detectCycle(ListNode head) {
+        ListNode slow = head, fast = head;
+        // 使得快慢指针相遇
+        while(fast != null && fast.next != null){
+            slow = slow.next;
+            fast = fast.next.next;
+            if(fast == slow) break;
+        }
+        // 不存在环，直接返回
+        if(fast == null || fast.next == null) return null;
+        // slow指针指向头节点
+        slow = head;
+        // slow指针和fast指针同时前进，直到相遇
+        while(slow != fast){
+            slow = slow.next;
+            fast = fast.next;
+        }
+
+        // 相遇位置即为环的起点
+        return slow;
+    }
+}
+```
+
+[142. 环形链表 II - 力扣（LeetCode）](https://leetcode.cn/problems/linked-list-cycle-ii/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+设slow指针走了k步，fast指针走了2k步，相遇位置距离环起点x步，环的周长为n，则有k=cn。可以发现，从起点走k-x步到达环起点，而从相遇位置再走k-x步恰好也回到了环起点(x+k-x=cn)。因此先让slow, fast指针到达相遇位置，然后slow指针回到起点，再同时前进，相遇的位置即为环起点位置。
+
+```java
+public class Solution {
+    public ListNode detectCycle(ListNode head) {
+        ListNode slow = head, fast = head;
+        // 使得快慢指针相遇
+        while(fast != null && fast.next != null){
+            slow = slow.next;
+            fast = fast.next.next;
+            if(fast == slow) break;
+        }
+        // 不存在环，直接返回
+        if(fast == null || fast.next == null) return null;
+        // slow指针指向头节点
+        slow = head;
+        // slow指针和fast指针同时前进，直到相遇
+        while(slow != fast){
+            slow = slow.next;
+            fast = fast.next;
+        }
+
+        // 相遇位置即为环的起点
+        return slow;
+    }
+}
+```
+
+[21. 合并两个有序链表 - 力扣（LeetCode）](https://leetcode.cn/problems/merge-two-sorted-lists/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public ListNode mergeTwoLists(ListNode list1, ListNode list2) {
+        // 虚拟头节点
+        ListNode dummy = new ListNode(), p = dummy;
+        ListNode p1 = list1, p2 = list2;
+
+        while(p1 != null && p2 != null){
+            // 比较 p1 和 p2 两个指针
+            if(p1.val <= p2.val) {
+                p.next = p1;
+                p1 = p1.next;
+            }else{
+                p.next = p2;
+                p2 = p2.next;
+            }
+            // p 指针不断前进
+            p = p.next;
+        }
+        if(p1 != null){
+            p.next = p1;
+        }
+        if(p2 != null){
+            p.next = p2;
+        }
+
+        return dummy.next;
+    }
+}
+```
+
+[2. 两数相加 - 力扣（LeetCode）](https://leetcode.cn/problems/add-two-numbers/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
+        ListNode dummy = new ListNode(), p = dummy;
+        ListNode p1 = l1, p2 = l2;
+        // 记录进位
+        int carry = 0;
+        // 开始执行加法，两条链表走完且没有进位才结束循环
+        while(p1 != null || p2 != null || carry != null){
+            // 先加上上次进位
+            int val = carry;
+            if(p1 != null){
+                val += p1.val;
+                p1 = p1.next;
+            }
+            if(p2 != null){
+                val += p2.val;
+                p2 = p2.next;
+            }
+            // 计算本次进位
+            carry = val/10;
+            val = val%10;
+            // 构建新节点连接到结果链表结尾
+            p.next = new ListNode(val);
+            p = p.next;
+        }
+        // 返回结果链表头节点（去除虚拟头节点） 
+        return dummy.next;
+    }
+}
+```
+
+[19. 删除链表的倒数第 N 个结点 - 力扣（LeetCode）](https://leetcode.cn/problems/remove-nth-node-from-end-of-list/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+要删除倒数第n个节点，先要找到倒数第 n+1 个节点。要找到倒数第 k 个节点，即顺数第 n-k+1 个节点，可以使用两个指针分别指向头节点，先让一个指针走 n-k 步，再让两个指针同时前进，当第一个指针到达末尾时终止，此时走了 n-k 步，第二个指针指向第 n-k+1 个节点，即倒数第 k 个节点。
+
+```java
+lass Solution {
+    public ListNode removeNthFromEnd(ListNode head, int n) {
+        if(head.next == null) return null;
+        ListNode dummy = new ListNode(-1, head);
+        // 删除倒数第 n 个，要先找到倒数第 n+1 个节点
+        ListNode preNode = findFromEnd(dummy, n+1);
+        // 删除倒数第 n 个节点
+        preNode.next = preNode.next.next;
+        return dummy.next;
+    }
+    // 返回链表倒数第 k 个节点
+    ListNode findFromEnd(ListNode head, int k){
+        ListNode p1 = head, p2 = head;
+        // p1 先走 k 步
+        for(int i=0;i<k;i++) p1 = p1.next;
+        // p1 和 p2 同时走 n-k 步
+        while(p1 != null){
+            p1 = p1.next;
+            p2 = p2.next;
+        }
+        // p2 现在指向第 n-k+1 个节点（倒数第k个节点）
+        return p2;
+    }
+}
+```
+
+[24. 两两交换链表中的节点 - 力扣（LeetCode）](https://leetcode.cn/problems/swap-nodes-in-pairs/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+利用递归函数定义，先将前2个元素翻转，再递归调用翻转函数，将子链表两两交换，最后将前两个节点接到后面即可。
+
+```java
+class Solution {
+    public ListNode swapPairs(ListNode head) {
+        if(head == null || head.next == null) return head;
+        ListNode first = head;
+        ListNode second = head.next;
+        ListNode others = head.next.next;
+        // 先将前两个元素翻转
+        second.next = first;
+        // 递归调用，将剩下的链表节点两两翻转，接到后面
+        first.next = swapPairs(others);
+        // 返回新的头节点
+        return second;
+    }
+}
+```
+
+[25. K 个一组翻转链表 - 力扣（LeetCode）](https://leetcode.cn/problems/reverse-nodes-in-k-group/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+首先找到头节点后面的k个节点的位置b，先将前k个节点翻转，再递归调用翻转函数，将后面的链表翻转，并接到前面k个节点翻转后的链表后面。
+
+```java
+class Solution {
+    public ListNode reverseKGroup(ListNode head, int k) {
+        ListNode a = head, b = head;
+        // 区间 [a, b) 包含 k 个待反转元素
+        while(int i = 0;i<k;i++){
+            // base case: 不足k个，不需要反转
+            if(b == null) return head;
+            b = b.next;
+        }
+        // 反转前 k 个元素
+        ListNode newHead = reverse(a, b);
+        // 递归反转后续链表并连接起来
+        a.next = reverseKGroup(b, k);
+        return newHead;
+    }
+    // 反转链表区间 [a,b) 的节点
+    ListNode reverse(ListNode a, ListNode b){
+        ListNode pre = null, cur = head, nxt;
+        while(a != b){
+            nxt = cur.next;
+            cur.next = pre;
+            pre = cur;
+            cur = nxt;
+        }
+        return pre;
+    }
+}
+```
+
+[138. 随机链表的复制 - 力扣（LeetCode）](https://leetcode.cn/problems/copy-list-with-random-pointer/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+使用哈希表 originToClone 保存原节点和复制节点的映射，遍历一遍链表，创建复制节点，并保存原节点和复制节点的映射关系。第二次遍历链表，将复制节点的结构连接好。
+
+```java
+class Solution {
+    public Node copyRandomList(Node head) {
+        // 原节点-拷贝节点的映射
+        Map<Node, Node> originToClone = new HashMap<>();
+        // 第一次遍历，先将所有节点克隆出来
+        for(Node p = head;p != null;p = p.next){
+            originToClone.put(p, new Node(p.val));
+        }
+        // 第二次遍历，将克隆节点的结构连接好
+        for(Node p = head;p != null;p = p.next){
+            if(p.next != null){
+                originToClone.get(p).next = originToClone.get(p.next);
+            }
+            if(p.random != null){
+                originToClone.get(p).random = originToClone.get(p.random);
+            }
+        }
+        // 返回克隆链表的头节点
+        return originToClone.get(head);
+    }
+}
+```
+
+[148. 排序链表 - 力扣（LeetCode）](https://leetcode.cn/problems/sort-list/description/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+先将所有节点添加到列表中，将节点按照值升序排序，再重建链表即可。
+
+```java
+class Solution {
+    public ListNode sortList(ListNode head) {
+        // 将所有节点添加到列表中，并升序排序
+        List<ListNode> nodes = new ArrayList<>();
+        for(ListNode p = head;p != null;p = p.next){
+            nodes.add(p);
+        }
+        Collections.sort(nodes, (a, b) -> a.val - b.val);
+        // 重建链表
+        ListNode dummy = new ListNode(), p = dummy;
+        for(int i = 0;i<nodes.size();i++){
+            ListNode node = nodes.get(i);
+            p.next = node;
+            p = p.next;
+        }
+        // 将最后一个节点的指针置空
+        p.next = null;
+        return dummy.next;
+    }
+}
+```
+
+思路二：
+
+使用归并排序方法，先使用快慢指针技巧找到链表的中间位置，再分别对子链表排序，再将子链表合并成升序链表即可。
+
+```java
+class Solution {
+    public ListNode sortList(ListNode head) {
+        return mergeSort(head, null);
+    }
+
+    private ListNode mergeSort(ListNode head, ListNode tail){
+        // 空链表和只有一个元素的链表直接返回
+        if(head == null) return null;
+        if(head.next == tail){
+            // 将节点的next指针断开
+            head.next = null;
+            return head;
+        }
+        // 获取链表中间位置的节点
+        ListNode slow = head, fast = head;
+        while(fast != tail && fast.next != tail){
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+        // 递归调用，对子链表排序
+        ListNode list1 = mergeSort(head, slow);
+        ListNode list2 = mergeSort(slow, tail);
+        // 将两条子链表合并成有序链表
+        return merge(list1, list2);
+    }
+
+    ListNode merge(ListNode head1, ListNode head2){
+        ListNode p1 = head1, p2 = head2;
+        ListNode dummy = new ListNode(0), p = dummy;
+        while(p1 != null && p2 != null){
+            if(p1.val <= p2.val){
+                p.next = p1;
+                p1 = p1.next;
+            }else{
+                p.next = p2;
+                p2 = p2.next;
+            }
+            p = p.next;
+        }
+        if(p1 != null){
+            p.next = p1;
+        }
+        if(p2 != null){
+            p.next = p2;
+        }
+        return dummy.next;
+    }
+}
+```
+
+[23. 合并 K 个升序链表 - 力扣（LeetCode）](https://leetcode.cn/problems/merge-k-sorted-lists/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+由于链表已经是升序的，因此当前每条链表的头节点中值最小的即为当前值最小的节点，需要连接到结果链表中。可以使用最小堆保存节点，这样堆顶的即为最小的节点。先将每个链表的头节点添加到堆中，每次从堆顶取出当前最小的节点 node，连接到合并链表中，并将该节点的下一个节点添加到队中，直到队列为空结束。
+
+```java
+class Solution {
+    public ListNode mergeKLists(ListNode[] lists) {
+        // 优先级队列，最小堆
+        PriorityQueue<ListNode> pq = new PriorityQueue<>((a,b) -> a.val - b.val);
+        // 将 k 个链表的头节点加入最小堆
+        for(ListNode node:lists){
+            if(node != null){
+                pq.add(node);
+            }
+        }
+        ListNode dummy = new ListNode(0), p = dummy;
+
+        while(!pq.isEmpty()){
+            // 获取最小节点，接到结果链表中
+            ListNode node = pq.poll();
+            // 将节点的下一个节点添加到最小堆中
+            if(node.next != null){
+                pq.add(node.next);
+            }
+            p.next = node;
+            p = p.next;
+        }
+        return dummy.next;
+    }
+}
+```
+
+[146. LRU 缓存 - 力扣（LeetCode）](https://leetcode.cn/problems/lru-cache/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+为了保存和获取数据，可以使用哈希表，还需要维护数据是否为最近使用的，每次读取数据需要将数据设为最新的，当添加数据时，若容量已满，需要淘汰最久没有被使用过的，即需要维护数据的顺序，可以使用链表。Map集合中恰好有一个类 LinkedHashMap 既可以保存数据，也可以保证有序性，当获取元素时，将该元素移到链表尾部；当添加元素时，若容量已满，将链表头部的元素删除。
+
+```java
+class LRUCache {
+    // 缓存
+    LinkedHashMap<Integer,Integer> cache=new LinkedHashMap<>();
+    int capacity;
+    
+    public LRUCache(int capacity) {
+        this.capacity=capacity;
+    }
+    
+    public int get(int key) {
+        if(!cache.containsKey(key)) return -1;
+        // 将数据移到队头并返回
+        makeRecently(key);
+        return cache.get(key);
+    }
+    
+    public void put(int key, int value) {
+        // 若缓存中存在，更新值并移到队尾
+        if(cache.containsKey(key)){
+            cache.put(key,value);
+            makeRecently(key);
+            return;
+        }
+        // 否则需要判断大小是否达到容量
+        if(cache.size()==capacity){
+            int oldestKey=cache.keySet().iterator().next();
+            cache.remove(oldestKey);
+        }
+        cache.put(key,value);
+    }
+    
+    void makeRecently(int key){
+        int value=cache.get(key);
+        // 删除key，重新插入到队尾
+        cache.remove(key);
+        cache.put(key,value);
+    }
+}
+```
+
 
