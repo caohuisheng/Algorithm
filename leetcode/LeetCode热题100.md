@@ -1499,4 +1499,469 @@ class LRUCache {
 }
 ```
 
+## 二叉树
+
+[104. 二叉树的最大深度 - 力扣（LeetCode）](https://leetcode.cn/problems/maximum-depth-of-binary-tree/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+利用二叉树，使用变量 depth 记录当前遍历节点的深度，当到达叶子节点时更新最大深度即可。
+
+```java
+class Solution {
+    // 记录遍历到的节点的深度
+    int depth=0;
+    // 记录最大深度
+    int res=0;
+
+    void traverse(TreeNode root){
+        if(root==null) return;
+        // 前序位置
+        depth++;
+        if(root.left==null&&root.right==null){
+            //到达叶子节点，更新最大深度
+            res=Math.max(res,depth);
+        }
+        traverse(root.left);
+        traverse(root.right);
+        // 后序位置
+        depth--;
+    }
+    //定义：输入根节点，返回这颗二叉树的最大深度
+    public int maxDepth(TreeNode root) {
+        traverse(root);
+        return res;
+    }
+}
+```
+
+思路二：
+
+设$maxDepth_{left}$ 和 $maxDepth_{right}$为左右子树的最大深度，则以 root 为根节点的二叉树的最大深度为 $max(maxDepth_{left},maxDepth_{right}) + 1$。
+
+```java
+class Solution {
+    //定义：输入根节点，返回这颗二叉树的最大深度
+    public int maxDepth(TreeNode root) {
+        if(root == null) return 0;
+        return 1 + Math.max(maxDepth(root.left), maxDepth(root.right));
+    }
+}
+```
+
+[226. 翻转二叉树 - 力扣（LeetCode）](https://leetcode.cn/problems/invert-binary-tree/description/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public TreeNode invertTree(TreeNode root) {
+        traverse(root);
+        return root;
+    }
+    void traverse(TreeNode root){
+        if(root==null) return;
+        traverse(root.left);
+        traverse(root.right);
+        // 交换左右子节点
+        TreeNode tmp=root.left;
+        root.left=root.right;
+        root.right=tmp;
+    }
+}
+```
+
+[101. 对称二叉树 - 力扣（LeetCode）](https://leetcode.cn/problems/symmetric-tree/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+定义函数 traverse(root1, root2) 判断以root1和root2为根节点的两课子树是否是互相对称的，首先判断根节点是否相等，再递归调用函数，判断子节点是否对称。
+
+```java
+class Solution {
+    public boolean isSymmetric(TreeNode root) {
+        return traverse(root.left, root.right);
+    }
+    //定义：判断以root1和root2为根节点的两课子树是否是互相对称的
+    boolean traverse(TreeNode root1, TreeNode root2){
+        if(root1 == null && root2 == null) return true;
+        if(root1 == null || root2 == null) return false;
+        return root1.val == root2.val 
+            && traverse(root1.left, root2.right) 
+            && traverse(root1.right, root2.left);
+    }
+}
+```
+
+思路二：
+
+迭代遍历二叉树，使用队列q保存遍历的节点，初始将根节点的左右子节点加入队列，每次从队列取出两个节点，判断节点是否相等，若不相等直接返回false，若相等则分别将两个节点的子节点按相反的顺序加入队列，使得对称的节点是相邻的，继续判断子节点是否对称，值到队列为空结束。
+
+```java
+class Solution {
+    public boolean isSymmetric(TreeNode root) {
+        return traverse(root.left, root.right);
+    }
+    boolean traverse(TreeNode u, TreeNode v){
+        Queue<TreeNode> q = new LinkedList<>();
+        // 初始将左右节点加入
+        q.offer(u);
+        q.offer(v);
+
+        while(!q.isEmpty()){
+            // 取出左右子树对称位置的节点并比较
+            u = q.poll();
+            v = q.poll();
+            if(u == null && v == null) continue;
+            if(u == null || v == null || u.val != v.val) return false;
+            // 将两个节点的子节点分别加入（对称位置的放在一起）
+            q.offer(u.left);
+            q.offer(v.right);
+            q.offer(u.right);
+            q.offer(v.left);
+        }
+        return true;
+    }
+}
+```
+
+[543. 二叉树的直径 - 力扣（LeetCode）](https://leetcode.cn/problems/diameter-of-binary-tree/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+直径即为树中最长路径的长度，经过节点node的最长路径长度为maxLeftDepth + maxRightDepth + 1，因此可以遍历二叉树，计算经过每个节点的最长路径长度，取最大值即为直径。同时，可以在计算maxDepth的同时，更新最长直径maxDeameter。
+
+```java
+class Solution {
+    int maxDiameter = 0;
+    public int diameterOfBinaryTree(TreeNode root) {
+        maxDepth(root);
+        return maxDiameter;
+    }
+    int maxDepth(TreeNode root){
+        if(root == null) return 0;
+        int leftDepth = maxDepth(root.left);
+        int rightDepth = maxDepth(root.right);
+        maxDiameter = Math.max(maxDiameter, leftDepth + rightDepth);
+        return Math.max(leftDepth, rightDepth) + 1;
+    }
+}
+```
+
+[102. 二叉树的层序遍历 - 力扣（LeetCode）](https://leetcode.cn/problems/binary-tree-level-order-traversal/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+使用队列q保存每一层的节点，初始将根节点加入队列，每次将上一层的节点弹出，并将弹出节点的子节点加入队列。
+
+```java
+class Solution {
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        List<List<Integer>> res = new ArrayList<>();
+        Queue<TreeNode> q = new LinkedList<>();
+        if(root == null) return res;
+        // 加入根节点
+        q.offer(root);
+
+        while(!q.isEmpty()){
+            List<Integer> list = new ArrayList<>();
+            int sz = q.size();
+            // 将当前层的节点加入列表中
+            for(int i=0;i < sz;i++){
+                TreeNode node = q.poll();
+                list.add(node.val);
+                // 将弹出节点的子节点加入队列
+                if(node.left != null){
+                    q.offer(node.left);
+                }
+                if(node.right != null){
+                    q.offer(node.right);
+                }
+            }
+            res.add(list);
+        }
+        return res;
+    }
+}
+```
+
+[108. 将有序数组转换为二叉搜索树 - 力扣（LeetCode）](https://leetcode.cn/problems/convert-sorted-array-to-binary-search-tree/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public TreeNode sortedArrayToBST(int[] nums) {
+        return traverse(nums, 0, nums.length - 1);
+    }
+    // 将区间[lo, hi]的元素转换为二叉搜索树
+    public TreeNode traverse(int[] nums, int lo, int hi){
+        if(lo > hi) return null;
+        int mid = (lo + hi) >> 1;
+        // 分别将中间位置左右两边的元素转换为二叉搜索树
+        TreeNode leftChild = traverse(nums, lo, mid-1);
+        TreeNode rightChild = traverse(nums, mid+1, hi);
+        return new TreeNode(nums[mid], leftChild, rightChild);
+    }
+}
+```
+
+[98. 验证二叉搜索树 - 力扣（LeetCode）](https://leetcode.cn/problems/validate-binary-search-tree/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+二叉搜索树需要满足左子节点的值小于父节点，右子节点的值大于父节点，可能我们会直接遍历二叉树，判断每个节点的左右子节点是否满足要求，但是这样判断不够的，对于每个节点，他的左子树的所有节点的值应该都小于该节点，右子树的所有节点的值应该都大于该节点。我们可以使用变量min, max限定当前节点值需要在 (min, max) 范围内，当遍历左子树时，限定max = root.val，当遍历右子树时，限定min = roo.val。
+
+```java
+class Solution {
+    public boolean isValidBST(TreeNode root) {
+        return isValid(root, null, null);
+    }
+    // 限定以 root 为根的节点必须满足 max.val > root.val > min.val
+    public boolean isValid(TreeNode root, TreeNode min, TreeNode max){
+        if(root == null) return true;
+        if(min != null && root.val <= min.val) return false;
+        if(max != null && root.val >= max.val) return false;
+        // 限定左子树的最大值为 root.val，右子树的最小值为 root.val
+        return isValid(root.left, min, root) && isValid(root.right, root, max);
+    }
+}
+```
+
+[230. 二叉搜索树中第 K 小的元素 - 力扣（LeetCode）](https://leetcode.cn/problems/kth-smallest-element-in-a-bst/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public int kthSmallest(TreeNode root, int k) {
+        traverse(root,k);
+        return res;
+    }
+    //结果
+    int res;
+    // 当前节点的排名
+    int rank=0;
+    void traverse(TreeNode root,int k){
+        if(root==null) return;
+        traverse(root.left,k);
+        // 中序代码位置
+        rank++;
+        if(rank==k){
+            // 找到第 k 小的元素
+            res=root.val;
+            return;
+        }
+        traverse(root.right,k);
+    }
+}
+```
+
+[199. 二叉树的右视图 - 力扣（LeetCode）](https://leetcode.cn/problems/binary-tree-right-side-view/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+二叉树的右视图即树的最右边的节点的列表，可以对二叉树进行层序遍历，每一层的最后一个元素即为结果。
+
+```java
+class Solution {
+    public List<Integer> rightSideView(TreeNode root) {
+        List<Integer> res = new ArrayList<>();
+        Queue<TreeNode> q = new LinkedList<>();
+        if(root == null) return res;
+        q.offer(root);
+        while(!q.isEmpty()){
+            int sz = q.size();
+            for(int i=0;i<sz;i++){
+                TreeNode node = q.poll();
+                // 将每一层的最后一个节点加入结果
+                if(i == sz-1) res.add(node.val);
+                if(node.left != null) {
+                    q.offer(node.left);
+                }
+                if(node.right != null){
+                    q.offer(node.right);
+                }
+            }
+        }
+        return res;
+    }
+}
+```
+
+[114. 二叉树展开为链表 - 力扣（LeetCode）](https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+先分别将左右子树展开为链表，再将左链表插入到右边即可，但是在连接连表时需要使用尾节点，因此在展开链表后需要返回链表的尾节点。
+
+```java
+class Solution {
+    public void flatten(TreeNode root) {
+        if(root == null) return;
+        traverse(root);   
+    }
+    // 将根节点为 root 的二叉树展开为链表，并返回链表尾节点
+    public TreeNode traverse(TreeNode root){
+        if(root.left == null && root.right == null) return root;
+        if(root.left == null){
+            return traverse(root.right);
+        }
+        if(root.right == null){
+            TreeNode leftTail = traverse(root.left);
+            root.right = root.left;
+            root.left = null;
+            return leftTail;
+        }
+        // 分别将左右子树展开
+        TreeNode leftTail = traverse(root.left);
+        TreeNode rightTail = traverse(root.right);
+        TreeNode rightHead = root.right;
+        // 将左链表插入到右边
+        root.right = root.left;
+        root.left = null;
+        leftTail.right = rightHead;
+        
+        // 返回链表的尾节点
+        return rightTail;
+    }
+}
+```
+
+[105. 从前序与中序遍历序列构造二叉树 - 力扣（LeetCode）](https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-inorder-traversal/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+前序遍历数组的第一个元素即为根节点的值rootValue，设其在中序遍历数组中的位置为index，则左子树的节点数为 index-in_lo，构建根节点，并递归调用函数，构建左右子树即可。
+
+```java
+class Solution {
+    // 存储 inorder 中值到索引的映射
+    Map<Integer, Integer> numToIdx = new HashMap<>();
+
+    public TreeNode buildTree(int[] preorder, int[] inorder) {
+        for(int i=0;i<inorder.length;i++){
+            numToIdx.put(inorder[i], i);
+        }
+        return build(preorder, inorder, 0, preorder.length - 1, 0, inorder.length - 1);
+    }
+
+    // 定义：前序遍历数组为 preorder[pre_lo..pre_hi], 中序遍历数组为 inorder[in_lo..inhi]
+    // 构造这个二叉树并返回根节点
+    public TreeNode build(int[] preorder, int[] inorder, int pre_lo, int pre_hi, int in_lo, int in_hi){
+        if(pre_lo > pre_hi) return null;
+
+        // root节点的值就为前序遍历数组的第一个元素
+        int rootValue = preorder[pre_lo];
+        // rootValue 在中序遍历数组中的位置
+        int index = numToIdx.get(rootValue);
+        // 左子树的节点数
+        int left_len = index - in_lo;
+        // 构造根节点
+        TreeNode root = new TreeNode(rootValue);
+        // 递归构造左右子树
+        root.left = build(preorder, inorder, pre_lo + 1, pre_lo + left_len, in_lo, index - 1);
+        root.right = build(preorder, inorder, pre_lo + left_len + 1, pre_hi, index + 1, in_hi);
+        // 返回根节点
+        return root;
+    }
+}
+```
+
+[437. 路径总和 III - 力扣（LeetCode）](https://leetcode.cn/problems/path-sum-iii/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+定义函数 rootSum(root, target) 计算以 root 为起点且满足路径总和为 targetSum 的路径数目，再遍历二叉树，分别计算以每个节点为起点的满足要求的路径数目，累加结果即可。
+
+```java
+class Solution {
+    public int pathSum(TreeNode root, int targetSum) {
+        if(root == null) return 0;
+        // 分别计算以每个节点为起点的满足要求的路径数目，并累加结果
+        return rootSum(root, targetSum) + pathSum(root.left, targetSum) + pathSum(root.right, targetSum);
+    }
+    // 以 root 为起点且满足路径总和为 targetSum 的路径数目
+    public int rootSum(TreeNode root, long targetSum){
+        if(root == null) return 0;
+        int res = 0;
+        if(root.val == targetSum) res++;
+        // 递归计算左右子树满足要求的路径数目
+        res += rootSum(root.left, targetSum - root.val) + rootSum(root.right, targetSum - root.val);
+        return res;
+    }
+}
+```
+
+思路二：
+
+定义节点的前缀和为根节点到当前节点间所有节点的和，使用 prefix 保存当前已经遍历节点的前缀和及出现次数，若当前节点的前缀和为 cur，若已遍历节点中存在前缀和为 cur- targetSum 的，则该节点到当前节点的路径上所有节点的和为 targetSum，即满足要求的路径数为 prefix[cur- targetSum]。递归遍历子节点，计算所有满足要求的路径，同时在退出当前节点时需要更新 prefix。
+
+```java
+class Solution {
+    // 当前已遍历路径的前缀和及数量
+    Map<Long, Integer> prefix = new HashMap<>();
+    public int pathSum(TreeNode root, int targetSum) {
+        // 初始化路径长度为0的路径数量为0
+        prefix.put(0L, 1);
+        return traverse(root, 0, targetSum);
+    }
+
+    // 定义：返回以 root 为根节点的树中路径长度为 targetSum 的路径总数，curr 为当前经过的路径长度
+    int traverse(TreeNode root, long curr, int targetSum){
+        if(root == null) return 0;
+        curr += root.val;
+        // 路径前缀和为 curr - targetSum 的路径数目
+        int res = prefix.getOrDefault(curr - targetSum, 0);
+        // 将当前路径加入 prefix
+        prefix.put(curr, prefix.getOrDefault(curr, 0) + 1);
+        // 递归调用函数，计算左右子树满足要求的路径数目
+        res += traverse(root.left, curr, targetSum) + traverse(root.right, curr, targetSum);
+        // 回溯（更新路径前缀和）
+        prefix.put(curr, prefix.get(curr) - 1);
+        return res;
+    }
+}
+```
+
+[236. 二叉树的最近公共祖先 - 力扣（LeetCode）](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        // base case
+        if(root==null) return null;
+        if(root == p || root == q) return root;
+
+        TreeNode left = lowestCommonAncestor(root.left,p,q);
+        TreeNode right = lowestCommonAncestor(root.right,p,q);
+        if(left != null && right != null) return root;
+        if(left == null && right == null) return null;
+        return left == null ? right:left;
+    }
+}
+```
+
+[124. 二叉树中的最大路径和 - 力扣（LeetCode）](https://leetcode.cn/problems/binary-tree-maximum-path-sum/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    int maxPath = Integer.MIN_VALUE;
+    public int maxPathSum(TreeNode root) {
+        maxGain(root);
+        return maxPath;
+    }
+
+    // 定义：返回节点的最大贡献值
+    // 贡献值：在以该节点为根节点的子树中，以该节点为起点的路径上所有节点值之和
+    public int maxGain(TreeNode root){
+        if(root == null) return 0;
+
+        // 递归计算左右子节点的最大贡献值
+        // 只有在最大贡献值大于 0 时，才会选取对应子节点
+        int maxLeft = Math.max(0, maxDepth(root.left));
+        int maxRight = Math.max(0, maxDepth(root.right));
+        
+        // 节点的最大路径和为该节点的值与左右子节点最大贡献值的和
+        maxPath = Math.max(maxPath, maxLeft + maxRight + root.val);
+
+        // 返回节点的最大贡献值
+        return Math.max(maxLeft, maxRight) + root.val;
+    }
+}
+```
 
