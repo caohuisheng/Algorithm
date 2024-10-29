@@ -1920,6 +1920,14 @@ class Solution {
 
 [236. 二叉树的最近公共祖先 - 力扣（LeetCode）](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/?envType=study-plan-v2&envId=top-100-liked)
 
+思路：
+
+根据函数定义，lowestCommonAncestor(root, p, q)计算节点p, q在以root为根节点的树中的最近公共祖先，递归调用函数，传入左子节点left和右子节点right，返回left和right，可以分为三种情况：
+
+- p, q分别在左右子树中(left != null && right != null)，则根节点即为节点p, q的最近公共祖先
+- p, q都不在左右子树中(left == null && right == null)，即树中不存在节点p, q的祖先，返回null
+- p和q同时在左子树中或同时在右子树中(left == null || right == null)，则说明最近公共祖先节点在左子树或右子树中，返回对应祖先节点即可
+
 ```java
 class Solution {
     public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
@@ -1937,6 +1945,10 @@ class Solution {
 ```
 
 [124. 二叉树中的最大路径和 - 力扣（LeetCode）](https://leetcode.cn/problems/binary-tree-maximum-path-sum/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+定义节点的贡献值为以该节点为起点的路径上所有的节点值之和，定义maxGain(root)计算root节点的最大贡献值，则当前节点的最大贡献值等于左右子节点的贡献值的较大值加上当前节点值，即max(maxLeft, maxRight) + root.val，则经过当前节点的最大路径和为maxLeft+maxRight+root.val。
 
 ```java
 class Solution {
@@ -1961,6 +1973,592 @@ class Solution {
 
         // 返回节点的最大贡献值
         return Math.max(maxLeft, maxRight) + root.val;
+    }
+}
+```
+
+## 图
+
+[200. 岛屿数量 - 力扣（LeetCode）](https://leetcode.cn/problems/number-of-islands/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+使用dfs搜索方法，每次从一个陆地节点开始搜索，并递归搜索四周节点，每完成一次搜索就遍历完了一个连通分支(岛屿)，结果加一，值到陆地都被遍历完结束，同时还需要定义visited记录已访问过的位置，避免走回头路。
+
+```java
+class Solution {
+    int n,m;
+    int[][] d = {{-1,0},{0,1},{1,0},{0,-1}};
+    // 是否访问过
+    boolean[][] visited;
+    public int numIslands(char[][] grid) {
+        n = grid.length; 
+        m = grid[0].length;
+        visited = new boolean[n][m];
+        int res = 0;
+        for(int i=0;i<n;i++){
+            for(int j=0;j<m;j++){
+                // 只有陆地才遍历
+                if(grid[i][j]=='1'){
+                    res++;
+                    dfs(i,j,grid);
+                }
+            }
+        }
+        return res;
+    }
+    void dfs(int i, int j, char[][] grid){
+        // 超出边界，返回
+        if(i<0 || i>n-1 || j<0 || j>m-1) return;
+        // 跳过海水和已访问位置
+        if(grid[i][j] == '0' || visited[i][j]) return;
+        // 标记该位置已被访问
+        visited[i][j] = true;
+        // 遍历四周的位置
+        for(int k=0;k<4;k++){
+            dfs(i + d[k][0], j + d[k][1], grid);
+        }
+    }
+}
+```
+
+思路二：
+
+不使用visited数组，而是在每遍历一个位置时，就将该位置设置为海水位置，遍历时跳过海水位置。
+
+```java
+class Solution {
+    int n,m;
+    int[][] d={{-1,0},{0,1},{1,0},{0,-1}};
+    public int numIslands(char[][] grid) {
+        n = grid.length; 
+        m = grid[0].length;
+        int res=0;
+        for(int i=0;i<n;i++){
+            for(int j=0;j<m;j++){
+                // 只有陆地才遍历
+                if(grid[i][j]=='1'){ 
+                    res++;
+                    dfs(i,j,grid);
+                }
+            }
+        }
+        return res;
+    }
+    void dfs(int i, int j, char[][] grid){
+        // 超出边界，返回
+        if(i<0 || i>n-1 || j<0 || j>m-1) return;
+        // 已经是海水了
+        if(grid[i][j] == '0') return;
+        // 将(i,j)变成海水
+        grid[i][j]='0';
+        for(int k=0;k<4;k++){
+            dfs(i + d[k][0], j + d[k][1], grid);
+        }
+    }
+}
+```
+
+[207. 课程表 - 力扣（LeetCode）](https://leetcode.cn/problems/course-schedule/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+将课程抽象成一个有向图，节点数为课程总数，对于课程前置要求(u, v)，添加一条v指向u的边。使用拓扑排序方法，使用indegree保存每个节点的入度，初始将入度为0的节点加入队列，遍历队列中的节点u，并更新相邻节点的入度indegree[v]--，若入度变为0，则将该节点v加入队列，记录遍历课程的数量(可完成的课程数量)，若等于课程总数，则说明可以完成所有课程。
+
+```java
+class Solution {
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+        // 记录每个节点的入度
+        int[] indegree = new int[numCourses];
+        List<Integer>[] graph = new ArrayList[numCourses];
+        for(int i=0;i<numCourses;i++) graph[i] = new ArrayList<>();
+        for(int[] p:prerequisites){
+            int a = p[0], b = p[1];
+            graph[b].add(a);
+            indegree[a]++;
+        }
+        // 保存入度为0的节点
+        Queue<Integer> q=new LinkedList<>();
+        for(int i=0;i<numCourses;i++){
+            if(indegree[i]==0) q.offer(i);
+        }
+        // 当前可以修的课程数量
+        int count = 0;
+        while(!q.isEmpty()){
+            // 取出一个入度为0的节点
+            int x = q.poll();
+            count++;
+            // 将邻接节点入度-1
+            for(int y:graph[x]){
+                indegree[y]--;
+                if(indegree[y] == 0) q.offer(y);
+            }
+        }
+        // 当可以修的课程数等于课程总数时返回true
+        return count == numCourses;
+    }
+}
+```
+
+思路二：
+
+使用深度优先搜索方法，定义visited记录遍历过的节点，onPath记录当前遍历的路径上的节点，当遍历的某个节点已经存在于onPath中时，说明存在环，无法完成所有课程。
+
+```java
+class Solution {
+    // 记录遍历过的节点
+    boolean[] visited;
+    // 记录遍历过程中路径上的节点
+    boolean[] onPath;
+    // 记录图中是否有环
+    boolean hasCycle;
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+        List<Integer>[] g = buildGraph(numCourses, prerequisites);
+        visited = new boolean[numCourses];
+        onPath = new boolean[numCourses];
+        // 遍历图中的所有节点
+        for(int i = 0;i<numCourses;i++){
+            dfs(g, i);
+        }
+        // 当没有环时可以完成所有课程
+        return !hasCycle;
+    }
+
+    void dfs(List<Integer>[] g, int x){
+        if(onPath[x]) {
+            // 出现环
+            hasCycle = true;
+        }
+        // 如果出现环或已经访问过该节点，返回
+        if(hasCycle || visited[x]) return;
+        // 前序代码位置
+        visited[x] = true;
+        onPath[x] = true;
+        for(int y:g[x]){
+            dfs(g, y);
+        }
+        // 后序代码位置
+        onPath[x] = false;
+    }
+
+    List<Integer>[] buildGraph(int numCourses, int[][] prerequisites){
+        List<Integer>[] g = new ArrayList[numCourses];
+        for(int i=0;i<numCourses;i++) g[i] = new ArrayList<>();
+        for(int[] edge:prerequisites){
+            // 修完课程 v 才能修课程 u
+            // 在图中添加一条从 v 指向 u 的有向边
+            int u = edge[0], v = edge[1];
+            g[v].add(u);
+        }
+        return g;
+    }
+}
+```
+
+[994. 腐烂的橘子 - 力扣（LeetCode）](https://leetcode.cn/problems/rotting-oranges/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+定义 $dist[i][j]$记录位置 (i, j) 的新鲜橘子腐烂需要经过的最小分钟数，初始化为极大值，以每个腐烂橘子为起点进行bfs搜索，在遍历时更新dist数组，将新鲜橘子变成腐烂橘子状态，最后计算每个新鲜橘子需要经过最小分钟数的最大值即为结果，同时还需要判断是否存在新鲜橘子，若存在，说明无法使所有橘子腐烂，返回-1。
+
+```java
+class Solution {
+    int res = 0;
+    int m, n;
+    int[][] d = {{1,0},{-1,0},{0,1},{0,-1}};
+    // 记录每个新鲜橘子腐烂必须经过的最小分钟数
+    int[][] dist;
+    public int orangesRotting(int[][] grid) {
+        m = grid.length;
+        n = grid[0].length;
+        dist = new int[m][n];
+        // 初始化dist
+        for(int i=0;i < m;i++){
+            for(int j=0;j < n;j++){
+                if(grid[i][j] == 1) dist[i][j] = Integer.MAX_VALUE;
+            }
+        }
+        // 分别以每一个腐烂橘子为起点，进行bfs搜索
+        for(int i = 0;i < m;i++){
+            for(int j = 0;j < n;j++){
+                if(grid[i][j] == 2) {
+                    bfs(grid, i, j);
+                }
+            }
+        }
+        // 所有新鲜橘子腐烂需要分钟数的最大值即为结果
+        int res = 0;
+        for(int i = 0;i < m;i++){
+            for(int j = 0;j < n;j++){
+                if(grid[i][j] == 1){
+                    res = Math.max(res, dist[i][j]);
+                }
+            }
+        }
+
+        return res == Integer.MAX_VALUE ? -1:res;
+    }
+
+    void bfs(int[][] grid, int u, int v){
+        // 记录已经访问过的位置
+        boolean[][] visited = new boolean[m][n];
+        // 记录当前搜索的层数
+        int rank = 0;
+        // 创建节点队列，并加入起始节点
+        Queue<int[]> q = new LinkedList<>();
+        q.offer(new int[]{u, v});
+        while(!q.isEmpty()){
+            int sz = q.size();
+            while(sz-- > 0){
+                int[] node = q.poll();
+                int x = node[0], y = node[1];
+                if(visited[x][y]) continue;
+                visited[x][y] = true;
+                // 更新当前位置橘子腐烂需要的分钟数
+                dist[x][y] = Math.min(dist[x][y], rank);
+                // 将相邻节点加入队列
+                for(int k=0;k<4;k++){
+                    int nx = node[0] + d[k][0], ny = node[1] + d[k][1];
+                    if(nx < 0 || nx > m-1 || ny < 0 || ny > n-1) continue;
+                    if(grid[nx][ny] == 1) q.offer(new int[]{nx, ny});
+                }
+            }
+            rank++;
+        }
+    }
+}
+```
+
+思路二：
+
+使用多源广度优先搜索方法，初始将所有腐烂橘子节点加入队列，并开始进行bfs搜索，在搜索时每一层弹出队列中的节点，并将相邻的新鲜橘子节点加入队列，将其设置为腐烂橘子，最终遍历的最大层数即为结果，遍历完还需要判断是否存在新鲜橘子节点，若存在说明无法使所有橘子腐烂，返回-1。
+
+```java
+class Solution {
+    int m, n;
+    int[][] d = {{1,0},{-1,0},{0,1},{0,-1}};
+    public int orangesRotting(int[][] grid) {
+        m = grid.length;
+        n = grid[0].length;
+        int res = bfs(grid);
+        // 如果搜索完后还存在新鲜的橘子，直接返回
+        for(int i=0;i<m;i++){
+            for(int j=0;j<n;j++){
+                if(grid[i][j] == 1) return -1;
+            }
+        }
+        return res;
+    }
+
+    int bfs(int[][] grid){
+        // 记录当前搜索的层数
+        int rank = 0;
+        // 创建节点队列，并加入初始节点（腐烂橘子节点）
+        Queue<int[]> q = new LinkedList<>();
+        for(int i=0;i<m;i++){
+            for(int j=0;j<n;j++){
+                if(grid[i][j] == 2) q.offer(new int[]{i, j});
+            }
+        }
+        // 单元格中没有新鲜橘子需要经过的最小分钟数
+        int res = 0;
+        while(!q.isEmpty()){
+            int sz = q.size();
+            while(sz-- > 0){
+                int[] node = q.poll();
+                int x = node[0], y = node[1];
+                res = Math.max(res, rank);
+                // 将相邻节点加入队列
+                for(int k=0;k<4;k++){
+                    int nx = node[0] + d[k][0], ny = node[1] + d[k][1];
+                    if(nx < 0 || nx > m-1 || ny < 0 || ny > n-1) continue;
+                    // 将新鲜橘子节点加入队列
+                    if(grid[nx][ny] == 1){
+                        q.offer(new int[]{nx, ny});
+                        // 将新鲜橘子节点标记为腐烂
+                        grid[nx][ny] = 2;
+                    } 
+                }
+            }
+            rank++;
+        }
+        return res;
+    }
+}
+```
+
+[208. 实现 Trie (前缀树) - 力扣（LeetCode）](https://leetcode.cn/problems/implement-trie-prefix-tree/description/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Trie {
+    TrieSet set=new TrieSet();
+    public Trie() {
+    }
+    
+    public void insert(String word) {
+        set.add(word);
+    }
+    
+    public boolean search(String word) {
+        return set.contains(word);
+    }
+    
+    public boolean startsWith(String prefix) {
+        return set.hasKeyWithPrefix(prefix);
+    }
+}
+class TrieSet{
+    TrieMap<Object> map = new TrieMap<>();
+
+    void add(String key){
+        map.put(key,new Object());
+    }
+
+    void remove(String key){
+        map.remove(key);
+    }
+
+    boolean contains(String key){
+        return map.containsKey(key);
+    }
+
+    String shortestPrefixOf(String query){
+        return map.shortestPrefixOf(query);
+    }
+
+    String longestPrefixOf(String query){
+        return map.longestPrefixOf(query);
+    }
+
+    List<String> keysWithPrefix(String prefix){
+        return map.keysWithPrefix(prefix);
+    }
+
+    boolean hasKeyWithPrefix(String prefix){
+        return map.hasKeyWithPrefix(prefix);
+    }
+
+    List<String> keysWithPattern(String pattern){
+        return map.keysWithPattern(pattern);
+    }
+
+    boolean hasKeyWithPattern(String pattern){
+        return map.hasKeyWithPattern(pattern);
+    }
+}
+class TrieMap<V>{
+    // 字母的个数
+    static final int R = 26;
+    // 元素个数
+    int size = 0;
+    // 字典树根节点
+    TrieNode<V> root = new TrieNode<>();
+
+    /* 字典树节点的结构 */
+    static class TrieNode<V>{
+        V val=null;
+        TrieNode<V>[] children = new TrieNode[R];
+    }
+
+    // 添加或更新一个元素
+    void put(String key,V val){
+        if(!containsKey(key)) size++;
+        put(root, key, val, 0);
+    }
+
+    // 定义：向以node为根节点的trie树中插入key[i..]，返回插入完成后的根节点
+    TrieNode<V> put(TrieNode<V> node, String key, V val, int i){
+        if(node == null){
+            // 如果树枝不存在，新建
+            node = new TrieNode<>();
+        }
+        // System.out.println(node);
+        if(i == key.length()) {
+            // key的路径已经插入完成，将值val存入节点
+            node.val = val;
+            return node;
+        }
+        int idx = key.charAt(i) - 'a';
+        // 递归插入子节点，并接收返回值
+        node.children[idx] = put(node.children[idx], key, val, i+1);
+        return node;
+    }
+
+    // 删除一个元素
+    void remove(String key){
+        if(!containsKey(key)) return;
+        remove(root,key,0);
+        size--;
+    }
+
+    // 定义：在以node为根的Trie树种删除key[i..]，返回删除后的根节点
+    TrieNode<V> remove(TrieNode<V> node, String key, int i){
+        if(i == key.length()) {
+            // 找到key对应的TrieNode，删除val
+            node.val = null;
+        }else{
+            int idx = key.charAt(i)-'a';
+            // 递归去子树删除
+            node.children[idx] = remove(node.children[idx], key, i+1);
+        }
+        
+        /*后序位置，递归路径上的节点可能需要被清理*/
+        // 如果该节点存储着val，不需要清理
+        if(node.val != null) return node;
+        // 检查该节点是否还有后缀
+        for(int j = 0;j < R;j++){
+            // 只要存在一个子节点，就不需要清理
+            if(node.children[j] != null) return node;
+        }
+
+        // 没有存储val，也没有后缀数枝，则该节点需要被清理
+        return null;
+    }
+
+    // 搜索key对应的值，不存在返回null
+    V get(String key){
+        TrieNode<V> node = getNode(root, key);
+        if(node == null || node.val == null) return null;
+        return node.val;
+    }
+
+    // 在以 node 为根节点的树中查找key对应的节点
+    TrieNode<V> getNode(TrieNode<V> node,String key){
+        TrieNode<V> p = node;
+        for(int i = 0;i < key.length();i++){
+            if(p == null) return null;
+            int idx = key.charAt(i) - 'a';
+            p = p.children[idx];
+        }
+        return p;
+    }
+
+    // 判断key是否存在map中
+    boolean containsKey(String key){
+        return get(key) != null;
+    }
+
+    // 判断是否存在前缀为prefix的键
+    boolean hasKeyWithPrefix(String prefix){
+        return getNode(root, prefix) != null;
+    }
+
+    // 在所有键中寻找query的最短前缀
+    String shortestPrefixOf(String query){
+        TrieNode<V> p = root;
+        for(int i = 0;i < query.length();i++){
+            // 无法向下搜索
+            if(p == null) return "";
+            // 找到一个键是query的前缀
+            if(p.val != null) return query.substring(0,i);
+            // 向下搜索
+            int idx = query.charAt(i) - 'a';
+            p = p.children[idx];
+        }
+        // 如果query本身就是一个键
+        if(p != null && p.val != null) return query;
+        return "";
+    }
+
+    // 在所有键中寻找query的最长前缀
+    String longestPrefixOf(String query){
+        TrieNode<V> p = root;
+        // 记录前缀的最大长度
+        int max_len = 0;
+        for(int i = 0;i < query.length();i++){
+            // 无法向下搜索
+            if(p == null) return "";
+            // 更新前缀的长度
+            if(p.val != null) max_len = i;
+            int idx = query.charAt(i)-'a';
+            p = p.children[idx];
+        }
+        // query本身是一个键
+        if(p != null && p.val != null) return query;
+        return query.substring(0, max_len);
+    }
+
+    // 搜索前缀为prefix的所有键
+    List<String> keysWithPrefix(String prefix){
+        List<String> res = new ArrayList<>();
+        // 找到匹配prefix在树中的对应节点
+        TrieNode<V> x = getNode(root, prefix);
+        // 不存在匹配的，返回
+        if(x == null) return res;
+        // dfs遍历以 x 为根节点的子树
+        traverse(x, new StringBuilder(prefix), res);
+        return res;
+    }
+
+    // 遍历已node节点为根的树，找到所有键
+    void traverse(TrieNode<V> node, StringBuilder path, List<String> res){
+        if(node == null) return;
+        if(node.val != null) res.add(path.toString());
+        for(int i = 0;i < R;i++){
+            if(node.children[i] != null){
+                // 做选择
+                path.append('a' + i);
+                traverse(node.children[i], path, res);
+                // 撤销选择
+                path.deleteCharAt(path.length() - 1);
+            }
+        }
+    }
+
+    // 搜索所有匹配pattern通配符的键
+    List<String> keysWithPattern(String pattern){
+        List<String> res = new ArrayList<>();
+        traverse(root, new StringBuilder(), pattern, 0, res);
+        return res;
+    }
+
+    // 从node节点开始搜索匹配pattern[i..]的键，path记录搜索路径
+    void traverse(TrieNode<V> node, StringBuilder path, String pattern, int i, List<String> res){
+        if(node == null) return;
+        if(i == pattern.length()) {
+            // 找到一个匹配的键
+            if(node.val != null) res.add(path.toString());
+            return;
+        }
+        char c = pattern.charAt(i);
+        // 如果字符为通配符，可以匹配任意字符
+        if(c == '.'){
+            for(int j = 0;j < R;j++){
+                if(node.children[j] != null){
+                    path.append('a' + j);
+                    traverse(node.children[j], path, pattern, i+1, res);
+                    path.deleteCharAt(path.length() - 1);
+                }
+            }
+        }else{
+            path.append(c);
+            traverse(node.children[c-'a'], path, pattern, i+1, res);
+            path.deleteCharAt(path.length() - 1);
+        }
+    }
+
+    // 判断是否存在匹配通配符pattern的键
+    boolean hasKeyWithPattern(String pattern){
+        return hasKeyWithPattern(root, pattern, 0);
+    }
+
+    // 已node节点为根节点，搜索是否存在匹配通配符pattern[i..]的键
+    boolean hasKeyWithPattern(TrieNode<V> node, String pattern, int i){
+        if(node == null) return false;
+        if(i == pattern.length()) {
+            return node.val != null;
+        }
+        char c = pattern.charAt(i);
+        if(c=='.'){
+            for(int j = 0;j < R;j++){
+                if(node.children[j] != null){
+                    return hasKeyWithPattern(node.children[j], pattern, i+1);
+                }
+            }
+        }else{
+            return hasKeyWithPattern(node.children[c-'a'], pattern, i+1);
+        }
+        return false;
     }
 }
 ```
