@@ -1977,7 +1977,7 @@ class Solution {
 }
 ```
 
-## 图
+## 图论
 
 [200. 岛屿数量 - 力扣（LeetCode）](https://leetcode.cn/problems/number-of-islands/?envType=study-plan-v2&envId=top-100-liked)
 
@@ -2559,6 +2559,348 @@ class TrieMap<V>{
             return hasKeyWithPattern(node.children[c-'a'], pattern, i+1);
         }
         return false;
+    }
+}
+```
+
+## 回溯
+
+[46. 全排列 - 力扣（LeetCode）](https://leetcode.cn/problems/permutations/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    List<List<Integer>> res=new ArrayList<>();
+    // 记录每个元素是否被使用
+    boolean[] used;
+    // 主函数，输入一组不重复的数字，返回它们的全排列
+    public List<List<Integer>> permute(int[] nums) {
+        int n = nums.length;
+        used = new boolean[n];
+        traverse(nums, new LinkedList<Integer>());
+        return res;
+    }
+
+    // 路径：记录在track中
+    // 选择列表：nums 中不存在于 track 的那些元素（used[i] 为false）
+    // 结束条件：nums 中的元素全都在 track 中出现
+    void traverse(int[] nums,LinkedList<Integer> track){
+        // 到达叶子节点，添加结果
+        if(track.size() == nums.length){
+            res.add(new LinkedList(track));
+            return;
+        }
+        // 枚举下一个选择
+        for(int i = 0;i < nums.length;i++){
+            if(used[i]) continue;
+            // 做选择
+            track.add(nums[i]);
+            used[i] = true;
+            // 进入下一层决策树
+            traverse(nums,track);
+            // 取消选择
+            track.removeLast();
+            used[i] = false;
+        }
+    }
+}
+```
+
+[78. 子集 - 力扣（LeetCode）](https://leetcode.cn/problems/subsets/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    List<List<Integer>> res=new ArrayList<>();
+    // 记录回溯算法递归路径
+    List<Integer> track = new LinkedList<>();
+    public List<List<Integer>> subsets(int[] nums) {
+        traverse(nums,0);
+        return res;
+    }
+    
+    void traverse(int[] nums, int start){
+        // 前序位置，每个节点的值都是一个子集
+        res.add(new LinkedList(track));
+        // 枚举下一个元素
+        for(int i = start;i < nums.length;i++){
+            track.add(nums[i]);
+            traverse(nums, i+1);
+            track.removeLast();
+        }
+    }
+}
+```
+
+[17. 电话号码的字母组合 - 力扣（LeetCode）](https://leetcode.cn/problems/letter-combinations-of-a-phone-number/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+直接使用回溯算法，将每个数字对应的字母保存到mapping中，对于digits中的每一个数字，枚举对应的字母，添加到路径上，并进入下一层回溯树，当枚举完数字后，找到了一个结果，添加到结果列表中。
+
+```java
+class Solution {
+    // 数字到字母的映射
+    String[] mapping = new String[]{"","","abc","def","ghi","jkl","mno","pqrs","tuv","wxyz"};
+    List<String> res = new ArrayList<>();
+
+    // 回溯
+    void backtrack(String digits, int i, StringBuilder sb){
+        if(i == digits.length()){
+            res.add(sb.toString());
+            return;
+        }
+        int x = digits.charAt(i) - '0';
+        // 枚举数字可以表示的每一个字母
+        for(char c:mapping[x].toCharArray()){
+            // 做选择
+            sb.append(c);
+            // 递归下一层回溯树
+            dfs(digits, i+1, sb);
+            // 撤销选择
+            sb.deleteCharAt(sb.length() - 1);
+        }
+    }
+    public List<String> letterCombinations(String digits) {
+        if(digits.isEmpty()) return res;
+        StringBuilder sb = new StringBuilder(); 
+        dfs(digits,0,sb);
+        return res;
+    }
+}
+```
+
+[39. 组合总和 - 力扣（LeetCode）](https://leetcode.cn/problems/combination-sum/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    List<List<Integer>> res = new ArrayList<>();
+    // 记录回溯算法递归路径
+    List<Integer> track = new LinkedList<>();
+    //记录路径上元素的和
+    int trackSum = 0;
+    public List<List<Integer>> combinationSum(int[] candidates, int target) {
+        traverse(candidates, 0, target);
+        return res;
+    }
+    
+    void traverse(int[] nums,int start,int target){
+        // 前序位置，每个节点的值都是一个子集
+        if(trackSum == target){
+            res.add(new LinkedList(track));
+            return;
+        }
+        // 超出目标值，剪枝
+        if(trackSum > target) return;
+        // 枚举下一个选择
+        for(int i = start;i < nums.length;i++){
+            track.add(nums[i]);
+            trackSum += nums[i];
+            // 元素可以重复选择
+            traverse(nums, i, target);
+            track.removeLast();
+            trackSum -= nums[i];
+        }
+    }
+}
+```
+
+[22. 括号生成 - 力扣（LeetCode）](https://leetcode.cn/problems/generate-parentheses/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+- 使用回溯算法，使用track记录当前的括号串，在每一层可以选择一个左括号或右括号添加到括号串中
+- 同时使用left, right记录当前剩余的左右括号数量，如果剩余左括号数量大于剩余右括号数量，或者括号数量小于0时，都是不合法的，直接返回；如果左右括号数都为0，则找到了一个合法结果
+
+```java
+class Solution {
+    List<String> res=new ArrayList<>();
+    public List<String> generateParenthesis(int n) {
+        // 可用的左括号和右括号数量初始化为n
+        traverse(n, n, new StringBuilder());
+        return res;
+    }
+
+    // 可用的左括号数量和右括号数量分别为left, right
+    void traverse(int left, int right, StringBuilder track){
+        // 若左括号剩下的多，说明不合法
+        if(left > right) return;
+        // 数量小于 0 是不合法的
+        if(left < 0 || right < 0) return;
+        // 当所有括号都恰好用完时，得到一个合法的括号组合
+        if(left == 0 && right == 0){
+            res.add(track.toString());
+            return;
+        }
+        
+        // 尝试添加一个左括号
+        // 选择
+        track.append("(");
+        traverse(left-1, right, track);
+        // 撤销选择
+        track.deleteCharAt(track.length() - 1);
+        // 尝试添加一个右括号
+        // 选择
+        track.append(")");
+        traverse(left, right-1, track);
+        // 撤销选择
+        track.deleteCharAt(track.length() - 1);
+    }
+}
+```
+
+[79. 单词搜索 - 力扣（LeetCode）](https://leetcode.cn/problems/word-search/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    int[][] d = {{1,0},{-1,0},{0,1},{0,-1}};
+    // 标记是否访问过
+    boolean[][] visited;
+    int m, n;
+    // 是否找到合法单元格
+    boolean found = false;
+    public boolean exist(char[][] board, String word) {
+        m = board.length;
+        n = board[0].length;
+        visited = new boolean[m][n];
+        for(int i = 0;i < m;i++){
+            for(int j = 0;j < n;j++){
+                dfs(board, i, j, word, 0);
+                if(found) return true;
+            }
+        }
+        return false;
+    }
+
+    // 从(i, j)开始向四周搜索，试图匹配 word[p..]
+    void dfs(char[][] board, int x,int y, String word, int i){
+        if(i == word.length()){
+            // word被匹配完，找到一个答案
+            found = true;
+            return;
+        }
+        // 已经找到一个答案，不用搜索了
+        if(found) return;
+        if(x < 0 || x > m-1 || y < 0 || y > n-1) return;
+        if(visited[x][y]) return;
+        if(board[x][y] != word.charAt(i)) return;
+        // 标记已被访问
+        visited[x][y] = true;
+        // word[i]已被匹配，开始向四周搜索 word[i+1..]
+        for(int k = 0;k < 4;k++){
+            int nx = x + d[k][0], ny = y + d[k][1];
+            dfs(board, nx, ny, word, i+1);
+        }
+        // 撤销
+        visited[x][y] = false;
+    }
+}
+```
+
+[131. 分割回文串 - 力扣（LeetCode）](https://leetcode.cn/problems/palindrome-partitioning/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+- 使用回溯算法，使用i表示当前串 s[0..i-1] 已被分割为子串，需要将串 s[i..n-1] 分割成子串，则可以枚举下一个字串的结束位置j，当s[i..j] 是一个回文串时，则是合法的，开始分割下一个子串。
+- 为了判断串 s[i..j] 是否为回文串，可以先预处理一下，定义 $f[i][j]$ 表示串s[i..j]是否为回文串，则$f[i][j]=f[i-1][j+1]\&\&s[i]=s[j](i<j),f[i][j]=true(i>=j)$，即只有一个字符的子串和空串为回文串，其它的当首尾字符相等且中间的子串为回文串时才为回文串
+
+```java
+class Solution {
+    //f[i][j]: 子串s[i..j]是否为回文串
+    boolean[][] f;
+    // 结果
+    List<List<String>> res = new ArrayList<>();
+    // 路径（当前分割的子串列表）
+    List<String> track = new LinkedList<>();
+    public List<List<String>> partition(String s) {
+        int n = s.length();
+        f = new boolean[n][n];
+        for(boolean[] t:f) Arrays.fill(t, true);
+        for(int i = n-1;i>=0;i--){
+            for(int j = i+1;j<n;j++){
+                f[i][j] = (s.charAt(i) == s.charAt(j)) && f[i+1][j-1];
+            }
+        }
+        backtrack(s, 0);
+        return res;
+    }
+
+    // s[0..i-1]都已被分割成子串，需要将剩余的串s[i..n-1]分割成子串
+    void backtrack(String s, int i){
+        int n = s.length();
+        // 字符串被分割完了，找到了一个结果
+        if(i == n){
+            res.add(new ArrayList<>(track));
+            return;
+        }
+        // 枚举当前可以分割的回文串
+        for(int j = i;j < n;j++){
+            if(f[i][j]){
+                track.add(s.substring(i, j+1));
+                backtrack(s, j+1);
+                track.removeLast();
+            }
+        }
+    }
+}
+```
+
+[51. N 皇后 - 力扣（LeetCode）](https://leetcode.cn/problems/n-queens/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    List<List<String>> res = new ArrayList<>();
+
+    // 输入期盼边长 n，返回所有合法的放置
+    public List<List<String>> solveNQueens(int n) {
+        char[][] board = new char[n][n];
+        // 初始化空棋盘
+        for(int i=0;i<n;i++){
+            for(int j = 0;j<n;j++) board[i][j] = '.';
+        }
+        backtrack(board, 0);
+        return res;
+    }
+
+    // 路径：board中小于row的那些行都已经成功放置了皇后
+    // 选择列表：第 row 行的所有列都是防止皇后的选择
+    // 结束条件：row 超过 board 的最后一行
+    void backtrack(char[][] board,int row){
+        // 触发结束条件
+        if(row == board.length){
+            List<String> list = new ArrayList<>();
+            for(char[] r:board){
+                list.add(new String(r));
+            }
+            res.add(list);
+            return;
+        }
+
+        int n = board.length;
+        for(int col = 0;col < n;col++){
+            // 排除不合法选择
+            if(!isValid(board, row, col)) continue;
+            // 做选择
+            board[row][col] = 'Q';
+            // 进入下一行决策
+            backtrack(board, row + 1);
+            // 撤销选择
+            board[row][col] = '.';
+        }
+    }
+    // 判断当前选择是否合法
+    boolean isValid(char[][] board, int row, int col){
+        // 判断列上是否重复
+        for(int i=0;i<row;i++){
+            if(board[i][col]=='Q') return false; 
+        }
+        // 判断左上方是否存在棋子
+        for(int i = row-1,j = col-1;i >= 0 && j >= 0;i--,j--){
+            if(board[i][j] == 'Q') return false;
+        }
+        // 判断右上方是否存在棋子
+        for(int i = row-1,j = col+1;i >= 0 && j < board.length;i--,j++){
+            if(board[i][j] == 'Q') return false;
+        }
+        return true;
     }
 }
 ```
