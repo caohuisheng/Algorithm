@@ -2905,3 +2905,633 @@ class Solution {
 }
 ```
 
+## 二分
+
+[35. 搜索插入位置 - 力扣（LeetCode）](https://leetcode.cn/problems/search-insert-position/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public int searchInsert(int[] nums, int target) {
+        int left = 0, right = nums.length;
+        while(left < right){
+            int mid = (left + right) >> 1;
+            if(nums[mid] == target) return mid;
+            else if(nums[mid] < target) left = mid+1;
+            else right = mid;
+        }
+        // 没有找到该元素，此时left位于大于目标值的最小元素索引
+        return left;
+    }
+}
+```
+
+[74. 搜索二维矩阵 - 力扣（LeetCode）](https://leetcode.cn/problems/search-a-2d-matrix/description/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+将二维矩阵的每一行拼接起来就是一个递增的数组，因此可以在区间 [0..row*col-1] 二分搜索目标值，在比较时将一维下标转换为矩阵的坐标，从而获得矩阵的值，按照二分搜索框架修改搜索区间即可。
+
+```java
+class Solution {
+    public boolean searchMatrix(int[][] matrix, int target) {
+        int m = matrix.length, n = matrix[0].length; 
+        int left = 0, right = m*n;
+        while(left < right){
+            int mid = (left + right) >> 1;
+            int row = mid/n, col = mid % n;
+            if(matrix[row][col] == target) return true;
+            else if(matrix[row][col] < target) left = mid+1;
+            else right = mid;
+        }
+        return false;
+    }
+}
+```
+
+[34. 在排序数组中查找元素的第一个和最后一个位置 - 力扣（LeetCode）](https://leetcode.cn/problems/find-first-and-last-position-of-element-in-sorted-array/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public int[] searchRange(int[] nums, int target) {
+        return new int[]{left_bound(nums, target), right_bound(nums, target)};
+    }
+
+    int left_bound(int[] nums, int target){
+        int left = 0, right = nums.length;
+        while(left < right){
+            int mid = (left + right) >> 1;
+            if(nums[mid] == target) right = mid;
+            else if(nums[mid] < target) left = mid + 1;
+            else right = mid;
+        }
+        // 判断是否超出边界
+        if(left >= nums.length || nums[left] != target) return -1;
+        return left;
+    }
+    int right_bound(int[] nums, int target){
+        int left = 0, right = nums.length;
+        while(left < right){
+            int mid = (left + right) >> 1;
+            if(nums[mid] == target) left = mid + 1;
+            else if(nums[mid] < target) left = mid + 1;
+            else right = mid;
+        }
+        // 判断是否超出边界
+        if(right-1 < 0 || nums[right-1] != target) return -1;
+        return right-1;
+    }
+}
+```
+
+[33. 搜索旋转排序数组 - 力扣（LeetCode）](https://leetcode.cn/problems/search-in-rotated-sorted-array/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+设旋转排序数组的中间边界为p，则边界左边的数组和右边的数组都是升序的，且左边数组的最小值大于右边数组的最大值，即a[p+1]<a[p+2]<...<a[n-1]<a[0]<a[1]<...<a[p]。因此可以使用二分搜索，搜索区间为[l, r]，初始搜索区间为[0, n-1]，设中间位置mid = (l+r)/2，分两种情况：
+
+- a[mid] >= a[0]，则mid位于左边，a[0..mid]是升序的，若target位于区间a[0..mid]，则right = mid-1，否则left = mid+1
+- a[mid] <= a[n-1]，则mid位于右边，a[mid..n-1]是升序的，若target位于区间a[mid..right]，则left = mid+1，否则right=mid-1
+
+```java
+class Solution {
+    public int search(int[] nums, int target) {
+        int n = nums.length;
+        int left = 0, right = nums.length-1;
+        while(left <= right){
+            int mid = (left + right) >> 1;
+            // 找到了目标值，直接返回
+            if(nums[mid] == target){
+                return mid;
+            }
+            if(nums[mid] >= nums[0]){ //nums[0..mid]是有序的
+                if(nums[0] <= target && target < nums[mid]){ //目标值在有序区间
+                    right = mid - 1;
+                }else{
+                    left = mid + 1;
+                }
+            }else if(nums[mid] <= nums[n-1]){ //nums[mid..n-1]是有序的
+                if(nums[mid] < target && target <= nums[n-1]){ //目标值在有序区间
+                    left = mid + 1;
+                }else{
+                    right = mid - 1;
+                }
+            }
+        }
+        return -1;
+    }
+}
+```
+
+[153. 寻找旋转排序数组中的最小值 - 力扣（LeetCode）](https://leetcode.cn/problems/find-minimum-in-rotated-sorted-array/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+类似上题，设左右数组的边界位置为p，则最小值的位于p+1，若nums[mid] < nums[right]，说明mid在右边，right = mid，否则mid在左边，left = mid+1。
+
+```java
+class Solution {
+    public int findMin(int[] nums) {
+        int n = nums.length;
+        int left = 0, right = n - 1;
+        while(left < right){
+            int mid = (left + right) >> 1;
+            if(nums[mid] < nums[right]) right = mid;
+            else left = mid + 1;
+        }
+        return nums[left];
+    }
+}
+```
+
+## 栈
+
+[20. 有效的括号 - 力扣（LeetCode）](https://leetcode.cn/problems/valid-parentheses/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+使用栈保存括号，遍历每一个括号，若为左括号，直接入栈；若为右括号，判断栈顶元素是否为左括号且与当前括号匹配，若匹配，将栈顶括号弹出，否则说明括号串是无效的。
+
+```java
+class Solution {
+    public boolean isValid(String s) {
+        Stack<Character> stack = new Stack<>();
+        for(char c:s.toCharArray()){
+            if(c=='(' || c=='[' || c=='{') stack.push(c);
+            else if(!stack.isEmpty() && match(stack.peek(),c)) stack.pop();
+            else return false;
+        }
+        return stack.isEmpty();
+    }
+    boolean match(char a,char b){
+        return a=='{'&&b=='}'||a=='['&&b==']'||a=='('&&b==')';
+    }
+}
+```
+
+[155. 最小栈 - 力扣（LeetCode）](https://leetcode.cn/problems/min-stack/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class MinStack {
+    // 记录栈中所有元素
+    Stack<Integer> stk = new Stack<>();
+    // 记录栈中每个元素入栈时的元素最小值
+    Stack<Integer> minStk = new Stack<>();
+    public MinStack() {
+        
+    }
+    
+    public void push(int val) {
+        stk.push(val);
+        // 维护元素入栈后的栈中最小元素
+        if(minStk.isEmpty() || val <= minStk.peek()){
+            // 入栈元素就是最小元素
+            minStk.push(val);
+        }
+    }
+    
+    public void pop() {
+        int val = stk.pop();
+        // 出栈元素是栈中最小元素
+        if(val.equals(minStk.peek())){
+            minStk.pop();
+        }
+    }
+    
+    public int top() {
+        return stk.peek();
+    }
+    
+    public int getMin() {
+        return minStk.peek();
+    }
+}
+```
+
+[394. 字符串解码 - 力扣（LeetCode）](https://leetcode.cn/problems/decode-string/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+使用一个栈 stk 保存字符串，使用 i 记录当前遍历字符的下标，对于不同的字符，分3种情况：
+
+- 字母或左括号：直接入栈
+- 数字：解析当前数字，并入栈
+- 右括号：不断弹出栈中的字符串，并逆序拼接成串subStr，直到遇到左括号为止，此时栈顶元素一定为数字，将数字 x 弹出，将串subStr重复 x 次重新入栈
+
+最终将栈中的字符串都逆序拼接起来即可。
+
+```java
+class Solution {
+    // 当前遍历字符的下标
+    int i = 0;
+    char[] a;
+    public String decodeString(String s) {
+        // 保存入栈的字符串
+        LinkedList<String> stk = new LinkedList<>();
+        a = s.toCharArray();
+
+        while(i < a.length){
+            if(Character.isLetter(a[i]) || a[i] == '['){
+                // 字母或左括号直接入栈
+                stk.addLast(String.valueOf(a[i++]));
+            }else if(Character.isDigit(a[i])){
+                // 获取一个数字并入栈
+                stk.addLast(getDigits());
+            }else if(a[i] == ']'){
+                // 弹出栈中元素并生成新的字符串，直到遇到左括号为止
+                LinkedList<String> sub = new LinkedList<>();
+                while(!"[".equals(stk.peekLast())){
+                    sub.addFirst(stk.removeLast());
+                }
+                // 弹出左括号
+                stk.removeLast();
+                // 将字符串重复num次，添加到栈中
+                String subStr = getString(sub);
+                Integer num = Integer.valueOf(stk.removeLast());
+                stk.addLast(subStr.repeat(num));
+                i++;
+            }
+        }
+        return getString(stk);
+    }
+
+    String getDigits(){
+        StringBuilder digit = new StringBuilder();
+        while(Character.isDigit(a[i])){
+            digit.append(a[i++]);
+        }
+        return digit.toString();
+    }
+    String getString(LinkedList<String> list){
+        StringBuilder sb = new StringBuilder();
+        for(String str:list){
+            sb.append(str);
+        }
+        return sb.toString();
+    }
+}
+```
+
+思路二：
+
+定义递归函数getString()解析字符串，对于当前遍历到的不同字符，有3种情况：
+
+- 数字，则文法为 String -> Digits[String]String，解析数字num，跳过左括号，递归调用getString()解析字符串str，再跳过右括号，将当前str重复num次，递归调用getString()
+- 字符，则文法为 String -> Char String，解析字符，递归调用getString()
+- 右括号，则文法为 String -> EOF，返回空串即可
+
+```java
+class Solution {
+    // 当前遍历字符的下标
+    int i = 0;
+    char[] a;
+    public String decodeString(String s) {
+        a = s.toCharArray();
+        return getString();
+    }
+
+    String getString(){
+        if(i == a.length || a[i] == ']'){
+            // String -> EOF
+            return "";
+        } 
+
+        String res = "";
+        if(Character.isDigit(a[i])){
+            // String -> Digits[String]String
+            // 解析Digits
+            Integer num = Integer.valueOf(getDigits());
+            // 跳过左括号
+            i++;
+            // 解析String
+            String str = getString();
+            // 跳过右括号
+            i++;
+            // 构造字符串
+            res = str.repeat(num);
+        }else if(Character.isLetter(a[i])){
+            // String -> Char String
+            // 解析Char
+            res = String.valueOf(a[i++]);
+        }
+
+        // 递归解析剩余的字符串
+        return res.concat(getString());
+    }
+
+    String getDigits(){
+        StringBuilder digit = new StringBuilder();
+        while(Character.isDigit(a[i])){
+            digit.append(a[i++]);
+        }
+        return digit.toString();
+    }
+}
+```
+
+[739. 每日温度 - 力扣（LeetCode）](https://leetcode.cn/problems/daily-temperatures/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+为了得到第 i 天后面第一个更高的温度出现在几天后，可以逆序遍历每天的温度，使用单调栈保存后面比当天温度高的天的下标，当第i天入栈时，将栈中温度低于 temperatures[i] 的天都弹出，则第i天后面第一个更高的温度出现的天的下标为栈顶元素，若栈为空，则不存在比当天更高的温度。
+
+```java
+class Solution {
+    public int[] dailyTemperatures(int[] temperatures) {
+        int n = temperatures.length;
+        int[] res = new int[n];
+        // 单调递增栈
+        Stack<Integer> s = new Stack<>();
+        // 从后面开始遍历
+        for(int i = n-1;i >= 0;i--){
+            int x = temperatures[i];
+            // 将后面温度低于第i天的出栈
+            while(!s.isEmpty() && temperatures[s.peek()] <= x) s.pop();
+            // 计算后面一个更高温度出现在几天后
+            res[i] = s.isEmpty() ? 0 : s.peek() - i;
+            // 将当天的索引入栈
+            s.push(i);
+        }
+        return res;
+    }
+}
+```
+
+[84. 柱状图中最大的矩形 - 力扣（LeetCode）](https://leetcode.cn/problems/largest-rectangle-in-histogram/description/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+设矩形的的左右边界为left, right，则矩形的面积即为区间中最低的柱子的高度与区间长度之积，可以枚举左右边界，区间中的最低柱子可以一边枚举一边计算。由于需要枚举两个边界，时间复杂度为O(N^2)。
+
+```java
+class Solution {
+    public int largestRectangleArea(int[] heights) {
+        int n = heights.length;
+        int res = 0;
+        // 枚举矩形的左右边界
+        for(int left = 0;left <= n-1;left++){
+            int minHeight = heights[left];
+            for(int right = left;right <= n-1;right++){
+                minHeight = Math.min(minHeight, heights[right]);
+                res = Math.max(res, (right - left + 1) * minHeight);
+            }
+        }
+        return res;
+    }
+}
+```
+
+思路二：
+
+类似思路一，枚举矩形的高度，使用第i根柱子作为矩形的高度heights[i]，则左边界为当前柱子左边第一个高度小于heights[i]的柱子，右边界为当前柱子右边第一个高度小于heights[i]的柱子。时间复杂度为O(n^2)。
+
+```java
+class Solution {
+    public int largestRectangleArea(int[] heights) {
+        int n = heights.length;
+        int res = 0;
+        // 枚举矩形的高度
+        for(int mid = 0;mid <= n-1;mid++){
+            int left = mid-1, right = mid+1;
+            while(left >= 0 && heights[left] >= heights[mid]) left--;
+            while(right < n && heights[right] >= heights[mid]) right++;
+            res = Math.max(res, (right - left - 1) * heights[mid]);
+        }
+        return res;
+    }
+}
+```
+
+思路三：
+
+预先将每个位置 i 左边和右边第一个高度小于heights[i]的主子的位置计算出来，保存在left, right数组中。使用单调栈，元素heights[i]入栈时将大于heights[i]的元素出栈，则left[i]即为栈顶元素，right数组的计算同理。最终枚举矩形的高度，求出每个高度的矩形的最大面积，结果取最大值即可。
+
+```java
+class Solution {
+    public int largestRectangleArea(int[] heights) {
+        int n = heights.length;
+        // left[i]为i左侧第一个高度小于heights[i]的矩形的位置
+        int[] left = new int[n];
+        // right[i]为i右侧第一个高度小于heights[i]的矩形的位置
+        int[] right = new int[n];
+
+        // 单调递增栈
+        Deque<Integer> mono_stack = new ArrayDeque<>();
+        for(int i = 0;i < n;i++){
+            // 将不小于heights[i]的元素出栈
+            while(!mono_stack.isEmpty() && heights[mono_stack.peek()] >= heights[i]) {
+                mono_stack.pop();
+            }
+            left[i] = mono_stack.isEmpty() ? -1:mono_stack.peek();
+            mono_stack.push(i);
+        }
+        mono_stack.clear();
+
+        for(int i = n-1;i >= 0;i--){
+            // 将不小于heights[i]的元素出栈
+            while(!mono_stack.isEmpty() && heights[mono_stack.peek()] >= heights[i]){
+                mono_stack.pop();
+            }
+            right[i] = mono_stack.isEmpty() ? n:mono_stack.peek();
+            mono_stack.push(i);
+        }
+
+        int res = 0;
+        for(int i = 0;i<n;i++){
+            res = Math.max(res, (right[i] - left[i] - 1) * heights[i]);
+        }
+        return res;
+    }
+}
+```
+
+[215. 数组中的第K个最大元素 - 力扣（LeetCode）](https://leetcode.cn/problems/kth-largest-element-in-an-array/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+使用快速选择算法，定义左右边界lo, hi，使用nums[lo]作为基准元素，找到数组的基准位置p，使得左边元素都小于nums[p]，右边元素都大于等于nums[p]。要找到第k个元素，若 k<=p，则递归调用选择函数，在左区间搜索，否则在右区间搜索。
+
+```java
+class Solution {
+    public int findKthLargest(int[] nums, int k) {
+        int n = nums.length;
+        return quickSelect(nums, 0, n-1, n-k);
+    }
+    // 快速选择：从nums[lo..hi]中选择第k大的元素
+    int quickSelect(int[] nums, int lo, int hi, int k){
+        if(lo == hi) return nums[lo];
+        // 选择第一个元素作为基准元素
+        int x = nums[lo];
+        int j = lo;
+        for(int i = lo+1;i<=hi;i++){
+            // 如果当前元素小于基准元素，交换到左边区间
+            if(nums[i] < x){
+                j++;
+                swap(nums, i, j);
+            }
+        }
+        // 将基准元素移到左右区间的边界处
+        swap(nums, lo, j);
+        // 根据元素的顺序到指定的区间选择
+        if(k <= j) return quickSelect(nums, lo, j, k);
+        else return quickSelect(nums, j+1, hi, k);
+    }
+    void swap(int[] nums, int i, int j){
+        int temp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = temp;
+    }
+}
+```
+
+思路二：
+
+使用堆排序，先将数组保存到大顶堆中，再弹出堆顶元素k-1次，此时堆顶元素就是第k大的元素。
+
+```java
+class Solution {
+    public int findKthLargest(int[] nums, int k) {
+        int n = nums.length;
+        MyPriorityQueue pq = new MyPriorityQueue((a,b) -> a-b);
+        pq.buildHeap(nums);
+        for(int i=0;i<k-1;i++) pq.poll();
+        return pq.peek();
+    }
+}
+class MyPriorityQueue{
+    private final int N = (int)1e5+5;
+    // 保存堆中的元素
+    private int[] nums;
+    // 堆的大小
+    private int size;
+    // 比较元素的大小（实现大顶堆或小顶堆）
+    Comparator<Integer> comparator;
+
+    public MyPriorityQueue(Comparator<Integer> comparator){
+        this.size = 0;
+        this.comparator = comparator;
+    }
+
+    // 初始建堆（将数组中的元素保存在堆中）
+    public void buildHeap(int[] arr){
+        this.nums = arr;
+        this.size = arr.length;
+        for(int i = size/2 - 1;i >= 0;i--){
+            heapify(i);
+        }
+    }
+
+    // 添加一个元素
+    public void offer(int x){
+        nums[size++] = x;
+        swap(nums, 0, size - 1);
+        for(int i = size/2-1;i >= 0;i--) heapify(i);
+        heapify(0);
+    }
+
+    // 删除堆顶元素
+    public int poll(){
+        int x = nums[0];
+        swap(nums, 0, --size);
+        heapify(0);
+        return x;
+    }
+
+    // 返回堆顶元素
+    public int peek(){
+        return nums[0];
+    }
+
+    public int size(){
+        return size;
+    }
+
+    public boolean isEmpty(){
+        return size == 0;
+    }
+    
+    // 从节点i开始将调整堆
+    private void heapify(int i){
+        int l = i * 2 + 1, r = i * 2 + 2;
+        int largest = i;
+        // 将最大(大顶堆)或最小(小顶堆)的元素与父节点交换
+        if(l < size && comparator.compare(nums[l], nums[largest]) > 0) largest = l;
+        if(r < size && comparator.compare(nums[r], nums[largest]) > 0) largest = r;
+        if(largest != i){
+            swap(nums, i, largest);
+            // 递归开始调整下一层节点
+            heapify(largest);
+        }
+    }
+
+    private void swap(int[] nums,int i,int j){
+        int temp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = temp;
+    }
+}
+```
+
+[347. 前 K 个高频元素 - 力扣（LeetCode）](https://leetcode.cn/problems/top-k-frequent-elements/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+使用哈希表保存每个元素出现的次数，再将每个元素和出现的次数保存到大顶堆中，按照出现次数降序排序，堆顶元素就是出现次数最多的。
+
+```java
+class Solution {
+    public int[] topKFrequent(int[] nums, int k) {
+        // 大顶堆
+        PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> b[1] - a[1]);
+        // 保存每个数字出现的次数
+        Map<Integer, Integer> map = new HashMap<>();
+        for(int x:nums){
+            map.put(x, map.getOrDefault(x, 0) + 1);
+        }
+        for(int x:map.keySet()){
+            pq.offer(new int[]{x, map.get(x)});
+        }
+
+        int[] res = new int[k];
+        for(int i = 0;i < k;i++){
+            res[i] = pq.poll()[0];
+        }
+        return res;
+    }
+}
+```
+
+[295. 数据流的中位数 - 力扣（LeetCode）](https://leetcode.cn/problems/find-median-from-data-stream/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+使用一个大顶堆和一个小顶堆保存数据，大顶堆保存升序数组中间位置左边的元素，小顶堆保存中间位置右边的元素，当添加元素时选择size较小的添加，但是需要先添加到另一个堆中，再将另一个堆中的堆顶元素弹出添加到本堆中；当求中位数时，若两个堆的size相等，分别取堆顶元素求平均值即可，否则取size较大的堆的堆顶元素。
+
+```java
+class MedianFinder {
+    // 大顶堆：(0,mid)
+    PriorityQueue<Integer> left=new PriorityQueue<>((a,b)->b-a);
+    // 小顶堆: (mid,n-1)
+    PriorityQueue<Integer> right=new PriorityQueue<>();
+    public MedianFinder() {
+
+    }
+    
+    public void addNum(int num) {
+        // 将num添加到元素数量较小的堆中
+        if(left.size() < right.size()){
+            right.offer(num);
+            left.offer(right.poll());
+        }else{
+            left.offer(num);
+            right.offer(left.poll());
+        }
+    }
+    
+    public double findMedian() {
+        if(left.size() == right.size()) return (left.peek() + right.peek())/2.0;
+        else if(left.size() > right.size()) return left.peek();
+        else return right.peek();
+    }
+}
+```
+
