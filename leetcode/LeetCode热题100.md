@@ -3535,3 +3535,496 @@ class MedianFinder {
 }
 ```
 
+## 贪心
+
+[121. 买卖股票的最佳时机 - 力扣（LeetCode）](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+使用minprice记录当前股票的最低价格，遍历每一天的股票价格x，则当前最大利润为 x-minprice，与可以获取的最大利润maxprofix取最大值。
+
+```java
+class Solution {
+    public int maxProfit(int[] prices) {
+        // 当前最小价格
+        int minprice = Integer.MAX_VALUE;
+        // 当前最大利润
+        int maxprofit = 0;
+        for(int x:prices){
+            maxprofit = Math.max(maxprofit, x - minprice);
+            minprice = Math.min(minprice, x);
+        }
+        return maxprofit;
+    }
+}
+```
+
+思路二：
+
+设$dp[i][k][j]$表示第i天可以获得的最大利润，且最大操作次数为k，j表示第i天是否持有股票，则有
+$$
+dp[i][k][0]=max(dp[i-1][k][0],dp[i-1][k][1]+prices[i])\\
+dp[i][k][1]=max(dp[i-1][k][1],dp[i-1][k-1][0]-prices[i])
+$$
+base case为$dp[0][..][0]=dp[..][0][0]=0,dp[0][..][1]=dp[..][0][1]=-inf$
+
+本题是k=1的特例，则递推公式为
+$$
+dp[i][0]=max(dp[i-1][0],dp[i-1][1]+prices[i])\\dp[i][1]=max(dp[i-1][1],-prices[i])
+$$
+base case为$dp[0][0]=0,dp[0][1]=-inf$。
+
+```java
+class Solution {
+    public int maxProfit(int[] prices) {
+        int n = prices.length;
+        // dp[i][0]表示第i天可以获得的利润（第i天不持有股票）
+        // dp[i][1]表示第i天可以获得的利润（第i天持有股票）
+        int[][] dp = new int[n+1][2];
+        dp[0][0] = 0;
+        dp[0][1] = Integer.MIN_VALUE;
+        for(int i = 1;i <= n;i++){
+            // 第i天不操作或售出
+            dp[i][0] = Math.max(dp[i-1][0], dp[i-1][1] + prices[i-1]);
+            // 第i天不操作或买入
+            dp[i][1] = Math.max(dp[i-1][1], -prices[i-1]);
+        }
+        return dp[n][0];
+    }
+}
+```
+
+[55. 跳跃游戏 - 力扣（LeetCode）](https://leetcode.cn/problems/jump-game/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+使用farthest记录当前能够跳到的最远距离，遍历每一个位置，更新farthest，如果最远距离不大于当前位置，表示无法到达下一个位置，返回false，若都可以到达，返回true。
+
+```java
+class Solution {
+    public boolean canJump(int[] nums) {
+        int n = nums.length;
+        // 当前能够跳到的最远距离
+        int farthest = 0;
+        for(int i = 0;i < n - 1;i++){
+            // 更新farthest
+            farthest = Math.max(farthest, i + nums[i]);
+            // 最远距离不大于i，无法到达下一个位置
+            if(farthest <= i) return false;
+        }
+        // 判断是否可以达到最后一个位置
+        return true;
+    }
+}
+```
+
+[45. 跳跃游戏 II - 力扣（LeetCode）](https://leetcode.cn/problems/jump-game-ii/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+- 使用farthest记录当前可以到达的最远位置，定义end为跳的前一步可以到达的最远位置，jumps为当前跳的步数。
+- 对于位置i，可以到达的区间为[i+1, i + nums[i]]，设我们应该跳到的位置为p，则p+nums[p]应该是范围中最大的，在遍历该区间结束时已经保存到farthest中，此时需要跳一步，更新结束位置end = farthest，跳的步数+1。
+
+```java
+class Solution {
+    public int jump(int[] nums) {
+        int n = nums.length;
+        // 当前能够跳得最远的位置
+        int farthest = 0;
+        // 当前跳的这一步可以到达的最远位置
+        int end = 0;
+        // 当前跳的步数
+        int jumps = 0;
+        for(int i = 0;i < n - 1;i++){
+            // 更新farthest
+            farthest = Math.max(farthest, i + nums[i]);
+            // 上一步可以到达的范围为[i+1,end]
+            if(i == end){
+                end = farthest;
+                jumps++;
+            }
+        }
+        return jumps;
+    }
+}
+```
+
+[763. 划分字母区间 - 力扣（LeetCode）](https://leetcode.cn/problems/partition-labels/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+首先讲字符串的每个字符出现的次数保存在cnt1中，遍历字符串s，寻找合法的子串，每次将当前遍历的字符的出现次数保存到cnt2中，当cnt2中每个字符出现的次数与cnt1中对应字符出现次数相等，则表明该子串所有的字符只出现在该子串中，添加到结果中。
+
+```java
+class Solution {
+    public List<Integer> partitionLabels(String s) {
+        // 保存字符串s中每个字符出现的次数
+        int[] cnt1 = new int[26];
+        char[] a = s.toCharArray();
+        for(char c:a) {
+            cnt1[c-'a']++;
+        }
+
+        List<Integer> res = new ArrayList<>();
+        int i = 0;
+        // 遍历字符串s
+        while(i < a.length){
+            // 保存当前子串的每个字符出现的次数
+            int[] cnt2 = new int[26];
+            // 找到子串的结束位置
+            int j = i;
+            while(j < a.length){
+                cnt2[a[j]-'a']++;
+                // 找到了一个合法子串
+                if(check(cnt1, cnt2)) {
+                    j++;
+                    break;
+                }
+                j++;
+            }
+            res.add(j - i);
+            // 更新下一个字符的位置
+            i = j;
+        }
+
+        return res;
+    }
+    boolean check(int[] cnt1, int[] cnt2){
+        for(int i = 0;i < 26;i++){
+            // 子串中每个字符必须不出现在其它子串中
+            if(cnt2[i] > 0 && cnt2[i] != cnt1[i]) return false;
+        }
+        return true;
+    }
+}
+```
+
+思路二：
+
+使用last[26]数组记录每个字符最后一次出现的位置，使用start记录字串的开始位置，end记录子串中每个字符最后一次出现位置的最大值，遍历字符串s，当end==i时，说明子串中所有字符都只出现在本子串中，添加到结果中。
+
+```java
+class Solution {
+    public List<Integer> partitionLabels(String s) {
+        // 记录每个字符最后一次出现的位置
+        int[] last = new int[26];
+        char[] a = s.toCharArray();
+        for(int i = 0;i<a.length;i++) {
+            last[a[i]-'a'] = i;
+        }
+
+        List<Integer> res = new ArrayList<>();
+        int i = 0;
+        // 每个子串的开始和结束位置
+        int start = 0;
+        int end = 0;
+        // 遍历字符串s
+        while(i < a.length){
+            // 更新end
+            end = Math.max(end, last[a[i] - 'a']);
+            // 到达结束位置，子串的所有字符都是只包含在当前子串中
+            if(end == i){
+                res.add(end - start + 1);
+                start = end + 1;
+            }
+            i++;
+        }
+
+        return res;
+    }
+}
+```
+
+## 动态规划
+
+[70. 爬楼梯 - 力扣（LeetCode）](https://leetcode.cn/problems/climbing-stairs/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public int climbStairs(int n) {
+        int[] f = new int[n + 1];
+        f[0] = 1;
+        f[1] = 1;
+        for(int i = 2;i <= n;i++){
+            f[i] = f[i-1] + f[i-2];
+        }
+        return f[n];
+    }
+}
+```
+
+[118. 杨辉三角 - 力扣（LeetCode）](https://leetcode.cn/problems/pascals-triangle/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public List<List<Integer>> generate(int numRows) {
+        List<List<Integer>> res = new ArrayList<>();
+        // 先将第一行加入
+        List<List<Integer>> firstRow = new ArrayList<>();
+        firstRow.add(1);
+        res.add(firstRow);
+        for(int i = 2;i <= numRows;i++){
+            List<Integer> row = new ArrayList<>();
+            row.add(1);
+            List<Integer> pre = res.get(res.size() - 1);
+            // 讲前一行的每两个元素相加添加到新行中
+            for(int j = 0;j<pre.size() - 1;j++){
+                row.add(pre.get(j) + pre.get(j+1));
+            }
+            row.add(1);
+            res.add(row);
+        }
+        return res;
+    }
+}
+```
+
+[198. 打家劫舍 - 力扣（LeetCode）](https://leetcode.cn/problems/house-robber/?envType=study-plan-v2&envId=top-100-liked)
+
+定义f[i]表示前i间房间可以获得的最高金额，对于第i间房，可以选或不选，若选则相邻房屋不能选，否则可以选相邻房屋，递归方程为$f[i]=max(f[i-1],f[i-2]+nums[i-1])$，base case 为$f[0]=0,f[1]=nums[0]$。
+
+```java
+class Solution {
+    public int rob(int[] nums) {
+        int n = nums.length;
+        // f[i]表示前i间房屋可以获得的最高金额
+        int[] f = new int[n+1];
+        //base case
+        f[0] = 0;
+        f[1] = nums[0];
+        for(int i = 2;i<=n;i++){
+            f[i] = Math.max(f[i-1], f[i-2] + nums[i-1]);
+        }
+        return f[n];
+    }
+}
+```
+
+[279. 完全平方数 - 力扣（LeetCode）](https://leetcode.cn/problems/perfect-squares/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public int numSquares(int n) {
+        //f[i]表示和为i的完全平方数的最小数量
+        int[] f = new int[n+1];
+        Arrays.fill(f, Integer.MAX_VALUE);
+        f[0] = 0;
+        for(int i = 1;i<=n;i++){
+            //枚举每一个可能的平方数
+            for(int j = 1;j*j<=i;j++){
+                f[i] = Math.min(f[i], f[i-j*j] + 1);
+            }
+        }
+
+        return f[n];
+    }
+}
+```
+
+[322. 零钱兑换 - 力扣（LeetCode）](https://leetcode.cn/problems/coin-change/description/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public int coinChange(int[] coins, int amount) {
+        // f[i]表示凑成金额i需要最少的硬币数
+        int[] f = new int[amount+1];
+        int inf = (int)1e4+1;
+        Arrays.fill(f,inf);
+        // 凑成金额0只需要0个金币
+        f[0] = 0;
+        for(int i = 1;i <= amount;i++){
+            // 枚举可以选的金币
+            for(int coin:coins){
+                if(coin <= i) f[i] = Math.min(f[i], f[i-coin] + 1);
+            }
+        }
+        return f[amount] == inf ? -1:f[amount];
+    }
+}
+```
+
+[139. 单词拆分 - 力扣（LeetCode）](https://leetcode.cn/problems/word-break/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+定义f[i]表示子串s[0..i-1]是否可以被字典中的单词拼接出，可以枚举字典中每一个单词，若单词word为字符串s的后缀，则字符串能否被单词拼接转换为字符串去掉后面的单词后能否被单词拼接，则递推方程为
+$$
+f[i]=f[i-len_1](word_1=a[i-len,i-1])|f[i-len_2](word_2=a[i-len_2,i-1])|..
+$$
+
+```java
+class Solution {
+    public boolean wordBreak(String s, List<String> wordDict) {
+        char[] a = s.toCharArray();
+        int n = a.length;
+        // f[i]表示子串s[0..i-1]是否可以被字典中的单词拼接出
+        boolean[] f = new boolean[n + 1];
+        // base case
+        f[0] = true;
+        for(int i = 1;i <= n;i++){
+            // 枚举每一个单词
+            for(String word:wordDict){
+                int len = word.length();
+                // 判断单词是否为子串s[0..i-1]的后缀
+                if(i >= len && word.equals(s.substring(i-len, i))){
+                    f[i] |= f[i-len];
+                    // 当前子串可以被拼接出，结束枚举
+                    if(f[i]) break;
+                }
+            }
+        }
+        return f[n];
+    }
+}
+```
+
+[300. 最长递增子序列 - 力扣（LeetCode）](https://leetcode.cn/problems/longest-increasing-subsequence/?envType=study-plan-v2&envId=top-100-liked)
+
+```java
+class Solution {
+    public int lengthOfLIS(int[] nums) {
+        int n = nums.length;
+        // f[i]表示以nums[i]结尾的递增子序列的长度
+        int[] f = new int[n];
+        for(int i = 0;i<n;i++){
+            f[i] = 1;
+            // 在前面枚举每一个小于nums[i]的元素
+            for(int j = i-1;j>=0;j--){
+                if(nums[j] < nums[i]) f[i] = Math.max(f[i], f[j] + 1);
+            }
+        }
+
+        // 遍历以每个位置元素结尾的递增序列，取长度最大的
+        int res = 0;
+        for(int i = 0;i < n;i++){
+            res = Math.max(res, f[i]);
+        }
+        return res;
+    }
+}
+```
+
+[152. 乘积最大子数组 - 力扣（LeetCode）](https://leetcode.cn/problems/maximum-product-subarray/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+定义f1[i]表示以nums[i-1]结尾的子数组的最大乘积，f2[i]表示以nums[i-1]结尾的子数组的最小乘积，则对于每个数字x，有三种选择：
+
+- 与前面乘积最大的子数组结合(一般x为正数)
+- 与前面乘积最小的子数组结合(一般x为负数)
+- 自己单独成为一个子数组(x=0或单独成为一个数时乘积更大)
+
+则递推方程为：
+$$
+f1[i] = max(f1[i-1] * nums[i-1], f2[i-1] * nums[i-1], nums[i-1])\\
+f2[i] = min(f2[i-1] * nums[i-1], f1[i-1] * nums[i-1], nums[i-1])
+$$
+
+```java
+class Solution {
+    public int maxProduct(int[] nums) {
+        int n = nums.length;
+        // f1[i]：以nums[i-1]结尾的子数组的最大乘积
+        int[] f1 = new int[n+1];
+        // f2[i]：以nums[i-1]结尾的子数组的最小乘积
+        int[] f2 = new int[n+1];
+        // base case
+        f1[0] = 1;
+        f2[0] = 1;
+
+        int res = Integer.MIN_VALUE;
+        for(int i = 1;i <= n;i++){
+            f1[i] = max(f1[i-1] * nums[i-1], f2[i-1] * nums[i-1], nums[i-1]);
+            f2[i] = min(f2[i-1] * nums[i-1], f1[i-1] * nums[i-1], nums[i-1]);
+            res = max(res, f1[i], f2[i]);
+        }
+        return res;
+    }
+    int max(int a,int b,int c){
+        return Math.max(a, Math.max(b, c));
+    }
+    int min(int a,int b,int c){
+        return Math.min(a, Math.min(b, c));
+    }
+}
+```
+
+[416. 分割等和子集 - 力扣（LeetCode）](https://leetcode.cn/problems/partition-equal-subset-sum/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+首先求出数组和的一般作为目标值target，则题目转换为判断在nums中是否存在和为target的选择方案，即为背包问题。
+
+```java
+class Solution {
+    public boolean canPartition(int[] nums) {
+        // 目标值为数组元素之和的一半
+        int target = 0;
+        for(int x:nums){
+            target += x;
+        }
+        if(target%2 != 0) return false;
+        target /= 2;
+
+        int n = nums.length;
+        // 定义f[i][j]: 只选前i个元素，能否使目标值为j
+        boolean[][] f = new boolean[n+1][target+1];
+        // base case
+        for(int i = 0;i<=n;i++) f[i][0] = true;
+        for(int i = 1;i<=n;i++){
+            for(int j = 1;j<=target;j++){
+                if(j >= nums[i-1]) f[i][j] = f[i-1][j] | f[i-1][j-nums[i-1]];
+                else f[i][j] = f[i-1][j];
+            }
+        }
+        return f[n][target];
+    }
+}
+```
+
+[32. 最长有效括号 - 力扣（LeetCode）](https://leetcode.cn/problems/longest-valid-parentheses/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+定义f[i]记录以s[i-1]结尾的最长合法括号子串长度，使用栈stk记录栈中左括号的的下标，遍历字符串s，分两种情况：
+
+- 字符为左括号，左括号不可能是合法括号串，直接入栈，并记录f[i]=0
+- 字符为右括号，若栈中存在左括号，将一个左括号的下标 leftIdx 出栈，则f[i] = f[leftIdx-1] + i - leftIdx + 1；若栈中不存在左括号，则表示不能形成有效括号子串，f[i] = 0
+
+```java
+class Solution {
+    public int longestValidParentheses(String s) {
+        char[] a = s.toCharArray();
+        int n = a.length;
+        // 定义f[i]: 记录以s[i-1]结尾的最长合法括号子串长度 
+        int[] f = new int[n+1];
+        Stack<Integer> stk = new Stack<>();
+
+        int res = 0;
+        for(int i = 1;i <= n;i++){
+            char c = a[i-1];
+            if(c == '(') {
+                // 遇到左括号，记录索引
+                stk.push(i);
+                // 左括号不可能是合法括号子串的结尾
+                f[i+1] = 0;
+            }else{
+                // 遇到右括号
+                if(!stk.isEmpty()){
+                    // 配对的左括号索引
+                    int leftIdx = stk.pop();
+                    // 计算以该括号结尾的最长有效括号子串的长度
+                    f[i] = f[leftIdx - 1] + i - leftIdx + 1;
+                    res = Math.max(res, f[i]);
+                }else{
+                    // 不存在配对的左括号
+                    f[i] = 0;
+                }
+            }
+        }
+
+        return res;
+    }   
+}
+```
+
