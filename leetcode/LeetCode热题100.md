@@ -4028,3 +4028,195 @@ class Solution {
 }
 ```
 
+## 多维动态规划
+
+[62. 不同路径 - 力扣（LeetCode）](https://leetcode.cn/problems/unique-paths/description/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+定义$dp[i][j]$表示从左上角到位置(i, j)的路径数，每个位置可以从左边一格到达或上边一格到达，则状态转移方程为$dp[i][j]=dp[i-1][j]+dp[i][j-1]$。base case为边界位置，即$dp[..][0]=dp[0][..]=1$。
+
+```java
+class Solution {
+    public int uniquePaths(int m, int n) {
+        // dp[i][j]：从左上角到达位置(i,j)的路径数
+        int[][] dp = new int[m][n];
+        // base case
+        for(int i = 0;i<m;i++) dp[i][0] = 1;
+        for(int j = 1;j<n;j++) dp[0][j] = 1;
+        for(int i = 1;i<m;i++){
+            for(int j = 1;j<n;j++){
+                dp[i][j] = dp[i-1][j] + dp[i][j-1];
+            }
+        }
+        return dp[m-1][n-1];
+    }
+}
+```
+
+[64. 最小路径和 - 力扣（LeetCode）](https://leetcode.cn/problems/minimum-path-sum/description/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+定义$dp[i][j]$表示从左上角到达(i-1,j-1)路径上数字总和的最小值，每个位置可以从左边一格或上边一格到达，则状态转移方程为$dp[i][j]=min(dp[i-1][j],dp[i][j-1])+grid[i-1][j-1]$。当处于边界时只能从一边到达，即$dp[0][..]=dp[..][0]=inf,dp[0][0]=grid[0][0]$。
+
+```java
+class Solution {
+    public int minPathSum(int[][] grid) {
+        final int inf = (int)1e5;
+        int m = grid.length, n = grid[0].length;
+        // dp[i][j]: 从左上角到达(i-1,j-1)路径上数字总和的最小值
+        int[][] dp = new int[m+1][n+1];
+        // base case
+        for(int i = 0;i<=m;i++) dp[i][0] = inf;
+        for(int j = 1;j<=n;j++) dp[0][j] = inf;
+        for(int i = 1;i <= m;i++){
+            for(int j = 1;j <= n;j++){
+                if(i == 1 && j == 1) dp[i][j] = grid[i-1][j-1];
+                else dp[i][j] = Math.min(dp[i-1][j], dp[i][j-1]) + grid[i-1][j-1];
+            }
+        }
+        return dp[m][n];
+    }
+}
+```
+
+[5. 最长回文子串 - 力扣（LeetCode）](https://leetcode.cn/problems/longest-palindromic-substring/description/?envType=study-plan-v2&envId=top-100-liked)
+
+思路一：
+
+枚举字符串的每一个字符作为回文子串的中间位置，从中间位置向两边扩展，当两边的字符不相等时停止，从而得到以该字符为中间字符的回文串，字符串的长度为奇数或偶数需要分别讨论，将每个位置作为中间位置的最长回文串的长度取最大值。
+
+```java
+class Solution {
+    public String longestPalindrome(String s) {
+        char[] a = s.toCharArray();
+        int n = a.length;
+        int start = 0;
+        int end = 0;
+        //枚举回文串的中间位置
+        for(int i = 0;i<n;i++){
+            int len1 = expandAroundCenter(a, i, i);
+            int len2 = expandAroundCenter(a, i, i + 1);
+            int len = Math.max(len1, len2);
+            // 更新最长回文串的开始和结束位置
+            if(len > end-start+1){
+                start = i - (len-1)/2;
+                end = i + len/2;
+            }
+        }
+        return s.substring(start, end+1);
+    }
+    // 从a[left],a[right]向左右两边扩展
+    public int expandAroundCenter(char[] a, int left, int right){
+        while(left >= 0 && right < a.length && a[left] == a[right]){
+            left--;
+            right++;
+        }
+        return right - left - 1;
+    }
+}
+```
+
+思路二：
+
+定义$dp[i][j]$表示子串$s[i..j]$是否为回文串，若s[i]=s[j]，则只需要判断$s[i+1..j-1]$是否为回文串，转移方程为$s[i][j]=s[i+1][j-1](s[i]=s[j]),s[i][j]=false(s[i]!=s[j])$。长度为1的子串或空串都为回文串，则$dp[i][i]=true,dp[i][0..i-1]=false$。
+
+```java
+class Solution {
+    public String longestPalindrome(String s) {
+        char[] a = s.toCharArray();
+        int n = a.length;
+        // dp[i][j]表示子串s[i][j]是否为回文串
+        boolean[][] dp = new boolean[n][n];
+        // base case: 长度为1的子串或空串为回文串
+        for(int i = 0;i<n;i++){
+            dp[i][i] = true;
+            if(i>0) dp[i][i-1] = true;
+        }
+        // 回文串的最大长度和开始位置
+        int maxLen = 1;
+        int start = 0;
+        // 枚举回文串的长度
+        for(int len = 2;len <= n;len++){
+            // 枚举回文串的开始位置
+            for(int i = 0;i+len-1 < n;i++){
+                int j = i+len-1;
+                if(a[i] == a[j]){
+                    dp[i][j] = dp[i+1][j-1];
+                    if(dp[i][j] && len > maxLen){
+                        maxLen = len;
+                        start = i;
+                    }
+                } 
+                else dp[i][j] = false;
+            }
+        }
+        return s.substring(start, start + maxLen);
+    }
+}
+```
+
+[1143. 最长公共子序列 - 力扣（LeetCode）](https://leetcode.cn/problems/longest-common-subsequence/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+定义$dp[i][j]$表示s1[0..i-1]和s2[0..j-1]的 lcs 长度，若s1[i] = s2[j]，则s1[i], s2[j]必定在 lcs 中，否则s1[i], s2[j]必定有一个不在 lcs 中，转移方程为$dp[i][j]=dp[i-1][j-1]+1(s1[i]=s2[j]), dp[i][j]=max(dp[i-1][j],dp[i][j-1])(s1[i]!=s2[j])$
+
+```java
+class Solution {
+    public int longestCommonSubsequence(String text1, String text2) {
+        char[] s1 = text1.toCharArray(), s2 = text2.toCharArray();
+        int m = s1.length, n = s2.length;
+        // dp[i][j]表示s1[0..i-1]和s2[0..j-1]的 lcs 长度
+        int[][] dp = new int[m+1][n+1];
+        for(int i = 1;i<=m;i++){
+            for(int j = 1;j<=n;j++){
+                // s1[i-1] 和 s2[j-1]必然在 lcs 中
+                if(s1[i-1] == s2[j-1]) dp[i][j] = dp[i-1][j-1] + 1;
+                // s1[i-1] 和 s2[j-1]至少有一个不在 lcs 中
+                else dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+            }
+        }
+
+        return dp[m][n];
+    }
+}
+```
+
+[72. 编辑距离 - 力扣（LeetCode）](https://leetcode.cn/problems/edit-distance/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+定义$dp[i][j]$表示word1[0..i]转换成word2[0..j]需要的最少操作数，分三种情况讨论：
+
+- $dp[i-1][j]=x$，则word1添加一个字符可以得到word2，$dp[i][j]=dp[i-1][j]+1$
+- $dp[i][j-1]=x$，则word1删除一个字符可以得到word2，$dp[i][j]=dp[i-1][j]+1$
+- $dp[i-1][j-1]=x$，若word1[i] != word2[j]，则word1修改一个字符可以得到word2，$dp[i][j]=dp[i-1][j]+1$；若word1[i]=word2[j]，则直接可以得到word2，$dp[i][j] = dp[i-1][j-1]$
+
+故转移方程为:$dp[i][j]=max(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+1)(word1[i]!=word2[j]), dp[i][j]=dp[i-1][j-1](word1[i]=word2[j])$
+
+```java
+class Solution {
+    public int minDistance(String word1, String word2) {
+        char[] s1 = word1.toCharArray(), s2 = word2.toCharArray();
+        int m = s1.length, n = s2.length;
+        // dp[i][j]表示word1[0..i]转换成word2[0..j]需要的最少操作数
+        int[][] dp = new int[m+1][n+1];
+        // base case
+        for(int i = 0;i<=m;i++) dp[i][0] = i;
+        for(int j = 1;j<=n;j++) dp[0][j] = j;
+        for(int i = 1;i<=m;i++){
+            for(int j = 1;j<=n;j++){
+                if(s1[i-1] == s2[j-1]) dp[i][j] = dp[i-1][j-1];
+                else dp[i][j] = max(dp[i-1][j] + 1, dp[i][j-1] + 1, dp[i-1][j-1] + 1);
+            }
+        }
+        return dp[m][n];
+    }
+    int min(int a,int b,int c){
+        return Math.min(a,Math.min(b,c));
+    }
+}
+```
+
