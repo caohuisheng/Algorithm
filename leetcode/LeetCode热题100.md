@@ -4220,3 +4220,106 @@ class Solution {
 }
 ```
 
+## 技巧
+
+[136. 只出现一次的数字 - 力扣（LeetCode）](https://leetcode.cn/problems/single-number/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+数组中只有一个元素出现1次，其它的都出现了2次，根据异或运算法则，相同的数异或运算结果为0，则数组中所有元素作异或运算的结果即为只出现一次的元素。
+
+```java
+class Solution {
+    public int singleNumber(int[] nums) {
+        int res = 0;
+        for(int x:nums){
+            res ^= x;
+        }
+        return res;
+    }
+}
+```
+
+[169. 多数元素 - 力扣（LeetCode）](https://leetcode.cn/problems/majority-element/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+利用正负电荷的思想，将众数看作一个正电荷，其它的看作负电荷，使用count记录总的电荷，遍历数组每个元素，如果是众数count+1，否则count-1。但是我们一开始不知道谁是众数，可以在count=0时将当前元素x当作众数，如果x本身就是众数，可以得到正确结果，如果不是，则相当于使用非众数与其它非众数抵消了，最终结果还是可以得到众数。
+
+```java
+class Solution {
+    public int majorityElement(int[] nums) {
+        // 计数器
+        int count = 0;
+        // 数组中的众数
+        int target = 0;
+        for(int x:nums){
+            if(count == 0){
+                // 当计数器为0时，假设nums[i]就是众数
+                target = x;
+                // 众数出现了一次
+                count = 1;
+            }else if(x == target){
+                count++;
+            }else{
+                count--;
+            }
+        }
+        return target;
+    }
+}
+```
+
+[75. 颜色分类 - 力扣（LeetCode）](https://leetcode.cn/problems/sort-colors/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+首先遍历一遍数组，统计0，1，2的出现次数，再将0，1，2按照对应出现次数填回数组即可。
+
+```java
+class Solution {
+    public void sortColors(int[] nums) {
+        // 记录0，1，2出现的次数
+        int[] cnt = new int[3];
+        for(int x:nums){
+            cnt[x]++;
+        }
+        // 将0，1，2填到数组中
+        int k = 0;
+        for(int i=0;i<3;i++){
+            for(int j=0;j<cnt[i];j++) nums[k++] = i;
+        }
+    }
+}
+```
+
+[287. 寻找重复数 - 力扣（LeetCode）](https://leetcode.cn/problems/find-the-duplicate-number/description/?envType=study-plan-v2&envId=top-100-liked)
+
+思路：
+
+设cnt[i]表示数组中小于等于i的元素个数，重复数为target，重复次数为count。分两种情况：
+
+- 若i<target，当count=2时cnt[i]=i，当count>2时，则说明有其它的数num被替换，若num<=i，则cnt[i]<i，否则cnt[i]=i，因此cnt[i]<=i
+- 若i>=target，当count=2时cnt[i]=i+1，当count>2时，则说明有其它的数num被替换，若num<=i，则cnt[i]=i，否则cnt[i]>i+1，因此cnt[i]>=i+1
+
+可见满足单调性，可以使用二分查找算法。
+
+```java
+class Solution {
+    public int findDuplicate(int[] nums) {
+        int n = nums.length;
+        int l = 1, r = n-1;
+        while(l <= r){
+            int mid = (l + r) >> 1;
+            int cnt = 0;
+            for(int x:nums){
+                if(x <= mid) cnt++;
+            }
+            if(cnt <= mid) l = mid + 1;
+            else r = mid - 1;
+        }
+        return r + 1;
+    }
+}
+```
+
